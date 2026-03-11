@@ -23,7 +23,7 @@ function shortenLabel(label) {
     'Later Introduction (2040)': 'Later intro (2040)',
     'Asymptomatic Screening (Prenatal)': 'Asymptomatic prenatal screening',
     'Intermediate LBP (Prenatal + Intermediate)': 'Asymptomatic prenatal screening + LBP for Nugent 4–6',
-    'CST4 Responder Rate 100%': 'CST4 responders 100%',
+    'CST4 Responder Rate 100%': 'LBP effective in MTZ non-responders',
     'Non-BV VDS = 10%': '−10% non-BV vaginal symptoms',
     'Non-BV VDS = 30%': '+10% non-BV vaginal symptoms',
   };
