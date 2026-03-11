@@ -35,7 +35,7 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 text-sm">
               {[
-                { label: 'Manuscript (preprint)', href: '[MANUSCRIPT_URL]' },
+                { label: 'Manuscript (preprint)', href: '/VMB_MANUSCRIPT_DRAFT_v2.pdf' },
                 { label: 'Supplementary appendix', href: '[APPENDIX_URL]' },
                 { label: 'GitHub repository', href: 'https://github.com/starsimhub/vmb_gr_2026q1' },
                 { label: 'Starsim framework', href: 'https://github.com/starsimhub/starsim' },

@@ -18,7 +18,7 @@ export default function Overview() {
           {/* Authors / institution */}
           <p className="text-sm text-gray-500 mb-8 font-sans">
             Jamie Cohen, Lillian Dillard &nbsp;·&nbsp; Institute for Disease Modeling &nbsp;·&nbsp;
-            <a href="[MANUSCRIPT_URL]" className="text-brand-teal hover:underline">
+            <a href="/VMB_MANUSCRIPT_DRAFT_v2.pdf" className="text-brand-teal hover:underline">
               Preprint
             </a>
             &nbsp;·&nbsp;
