@@ -72,6 +72,20 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Logos */}
+        <div className="flex items-center gap-6 mb-8">
+          <img
+            src="/idmod-logo.jpg"
+            alt="Institute for Disease Modeling"
+            className="h-8 opacity-80 brightness-0 invert"
+          />
+          <img
+            src="/GF MONOGRAM PARCHMENT.png"
+            alt="Gates Foundation"
+            className="h-8 opacity-80"
+          />
+        </div>
+
         {/* Divider */}
         <div className="border-t border-blue-700 pt-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
