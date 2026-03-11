@@ -1,0 +1,101 @@
+[
+  {
+    "label": "Eff=50%, Mean Dur=12m",
+    "efficacy_pct": 50,
+    "duration_months": 12,
+    "nugent_normal_6m_median": 67.7,
+    "nugent_normal_6m_p5": 66.9,
+    "nugent_normal_6m_p95": 68.6,
+    "cst1_6m_median": 41.0,
+    "cst1_6m_p5": 40.4,
+    "cst1_6m_p95": 41.6
+  },
+  {
+    "label": "Eff=50%, Mean Dur=18m",
+    "efficacy_pct": 50,
+    "duration_months": 18,
+    "nugent_normal_6m_median": 67.8,
+    "nugent_normal_6m_p5": 67.0,
+    "nugent_normal_6m_p95": 68.6,
+    "cst1_6m_median": 42.4,
+    "cst1_6m_p5": 41.8,
+    "cst1_6m_p95": 43.0
+  },
+  {
+    "label": "Eff=50%, Mean Dur=6m",
+    "efficacy_pct": 50,
+    "duration_months": 6,
+    "nugent_normal_6m_median": 62.4,
+    "nugent_normal_6m_p5": 61.5,
+    "nugent_normal_6m_p95": 63.5,
+    "cst1_6m_median": 18.7,
+    "cst1_6m_p5": 18.0,
+    "cst1_6m_p95": 19.4
+  },
+  {
+    "label": "Eff=65%, Mean Dur=12m",
+    "efficacy_pct": 65,
+    "duration_months": 12,
+    "nugent_normal_6m_median": 71.6,
+    "nugent_normal_6m_p5": 70.6,
+    "nugent_normal_6m_p95": 72.4,
+    "cst1_6m_median": 50.3,
+    "cst1_6m_p5": 49.4,
+    "cst1_6m_p95": 51.1
+  },
+  {
+    "label": "Eff=65%, Mean Dur=18m",
+    "efficacy_pct": 65,
+    "duration_months": 18,
+    "nugent_normal_6m_median": 71.7,
+    "nugent_normal_6m_p5": 70.7,
+    "nugent_normal_6m_p95": 72.4,
+    "cst1_6m_median": 52.2,
+    "cst1_6m_p5": 51.4,
+    "cst1_6m_p95": 52.8
+  },
+  {
+    "label": "Eff=65%, Mean Dur=6m",
+    "efficacy_pct": 65,
+    "duration_months": 6,
+    "nugent_normal_6m_median": 64.9,
+    "nugent_normal_6m_p5": 63.9,
+    "nugent_normal_6m_p95": 65.7,
+    "cst1_6m_median": 21.8,
+    "cst1_6m_p5": 21.1,
+    "cst1_6m_p95": 22.5
+  },
+  {
+    "label": "Eff=80%, Mean Dur=12m",
+    "efficacy_pct": 80,
+    "duration_months": 12,
+    "nugent_normal_6m_median": 75.2,
+    "nugent_normal_6m_p5": 74.4,
+    "nugent_normal_6m_p95": 76.2,
+    "cst1_6m_median": 59.6,
+    "cst1_6m_p5": 58.6,
+    "cst1_6m_p95": 60.7
+  },
+  {
+    "label": "Eff=80%, Mean Dur=18m",
+    "efficacy_pct": 80,
+    "duration_months": 18,
+    "nugent_normal_6m_median": 75.4,
+    "nugent_normal_6m_p5": 74.5,
+    "nugent_normal_6m_p95": 76.3,
+    "cst1_6m_median": 61.8,
+    "cst1_6m_p5": 60.9,
+    "cst1_6m_p95": 63.0
+  },
+  {
+    "label": "Eff=80%, Mean Dur=6m",
+    "efficacy_pct": 80,
+    "duration_months": 6,
+    "nugent_normal_6m_median": 67.2,
+    "nugent_normal_6m_p5": 66.3,
+    "nugent_normal_6m_p95": 68.2,
+    "cst1_6m_median": 25.2,
+    "cst1_6m_p5": 24.4,
+    "cst1_6m_p95": 25.9
+  }
+]

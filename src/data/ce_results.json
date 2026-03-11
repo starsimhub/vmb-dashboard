@@ -1,0 +1,103 @@
+{
+  "assumptions": {
+    "dalys_per_hiv": 15,
+    "dalys_per_ptb": 2.74,
+    "hsca_per_hiv": 11872.05,
+    "hsca_per_ptb": 447.68,
+    "analysis_period": "2026–2050",
+    "setting": "South Africa",
+    "source": "Gates Foundation / IPM cost-effectiveness analysis, March 2026 (preliminary)"
+  },
+  "scenarios": [
+    {
+      "id": "eff50_dur6m",  "label": "Eff=50%, 6m",
+      "efficacy_pct": 50,   "duration_months": 6,
+      "lbp_volume": 20346526,
+      "hiv_averted": 46573,  "ptb_averted": 182054,
+      "dalys_averted": 1105294,
+      "hiv_daly_pct": 54.8,  "ptb_daly_pct": 45.2,
+      "hsca": 560102367,
+      "hiv_hsca_pct": 85.4,  "ptb_hsca_pct": 14.6
+    },
+    {
+      "id": "eff65_dur6m",  "label": "Eff=65%, 6m",
+      "efficacy_pct": 65,   "duration_months": 6,
+      "lbp_volume": 20230033,
+      "hiv_averted": 51503,  "ptb_averted": 224145,
+      "dalys_averted": 1273983,
+      "hiv_daly_pct": 51.8,  "ptb_daly_pct": 48.2,
+      "hsca": 621505566,
+      "hiv_hsca_pct": 83.8,  "ptb_hsca_pct": 16.2
+    },
+    {
+      "id": "eff80_dur6m",  "label": "Eff=80%, 6m",
+      "efficacy_pct": 80,   "duration_months": 6,
+      "lbp_volume": 20109179,
+      "hiv_averted": 61568,  "ptb_averted": 259676,
+      "dalys_averted": 1501898,
+      "hiv_daly_pct": 52.6,  "ptb_daly_pct": 47.4,
+      "hsca": 739642689,
+      "hiv_hsca_pct": 84.3,  "ptb_hsca_pct": 15.7
+    },
+    {
+      "id": "eff50_dur12m", "label": "Eff=50%, 12m",
+      "efficacy_pct": 50,   "duration_months": 12,
+      "lbp_volume": 19319068,
+      "hiv_averted": 121546, "ptb_averted": 181158,
+      "dalys_averted": 2134939,
+      "hiv_daly_pct": 76.7,  "ptb_daly_pct": 23.3,
+      "hsca": 1376380842,
+      "hiv_hsca_pct": 94.1,  "ptb_hsca_pct": 5.9
+    },
+    {
+      "id": "eff65_dur12m", "label": "Eff=65%, 12m",
+      "efficacy_pct": 65,   "duration_months": 12,
+      "lbp_volume": 18991754,
+      "hiv_averted": 143549, "ptb_averted": 220845,
+      "dalys_averted": 2530308,
+      "hiv_daly_pct": 76.1,  "ptb_daly_pct": 23.9,
+      "hsca": 1621193216,
+      "hiv_hsca_pct": 93.9,  "ptb_hsca_pct": 6.1
+    },
+    {
+      "id": "eff80_dur12m", "label": "Eff=80%, 12m",
+      "efficacy_pct": 80,   "duration_months": 12,
+      "lbp_volume": 18680126,
+      "hiv_averted": 168975, "ptb_averted": 255316,
+      "dalys_averted": 2962310,
+      "hiv_daly_pct": 76.4,  "ptb_daly_pct": 23.6,
+      "hsca": 1900928114,
+      "hiv_hsca_pct": 94.0,  "ptb_hsca_pct": 6.0
+    },
+    {
+      "id": "eff50_dur18m", "label": "Eff=50%, 18m",
+      "efficacy_pct": 50,   "duration_months": 18,
+      "lbp_volume": 18230328,
+      "hiv_averted": 188003, "ptb_averted": 177450,
+      "dalys_averted": 3045230,
+      "hiv_daly_pct": 84.0,  "ptb_daly_pct": 16.0,
+      "hsca": 2101328666,
+      "hiv_hsca_pct": 96.2,  "ptb_hsca_pct": 3.8
+    },
+    {
+      "id": "eff65_dur18m", "label": "Eff=65%, 18m",
+      "efficacy_pct": 65,   "duration_months": 18,
+      "lbp_volume": 17722385,
+      "hiv_averted": 217422, "ptb_averted": 215751,
+      "dalys_averted": 3562910,
+      "hiv_daly_pct": 83.4,  "ptb_daly_pct": 16.6,
+      "hsca": 2448861667,
+      "hiv_hsca_pct": 96.1,  "ptb_hsca_pct": 3.9
+    },
+    {
+      "id": "eff80_dur18m", "label": "Eff=80%, 18m",
+      "efficacy_pct": 80,   "duration_months": 18,
+      "lbp_volume": 17254862,
+      "hiv_averted": 250345, "ptb_averted": 250386,
+      "dalys_averted": 4107716,
+      "hiv_daly_pct": 83.3,  "ptb_daly_pct": 16.7,
+      "hsca": 2818465595,
+      "hiv_hsca_pct": 96.0,  "ptb_hsca_pct": 4.0
+    }
+  ]
+}

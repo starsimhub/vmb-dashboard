@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans text-gray-800 bg-white antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .metric-card {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .nav-link {
+    @apply text-sm font-medium text-gray-600 hover:text-brand-blue transition-colors duration-150;
+  }
+
+  .control-label {
+    @apply text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1;
+  }
+
+  .toggle-btn {
+    @apply px-3 py-1.5 text-sm font-medium rounded border transition-all duration-150 cursor-pointer select-none;
+  }
+
+  .toggle-btn-active {
+    @apply bg-brand-blue text-white border-brand-blue;
+  }
+
+  .toggle-btn-inactive {
+    @apply bg-white text-gray-600 border-gray-300 hover:border-brand-blue hover:text-brand-blue;
+  }
+
+  .section-heading {
+    @apply text-2xl font-serif font-semibold text-brand-blue mb-2;
+  }
+
+  .section-subheading {
+    @apply text-base text-gray-500 font-sans mb-6 leading-relaxed;
+  }
+}
+
+/* Custom range slider styling */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #E5E7EB;
+  border-radius: 2px;
+  outline: none;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1B4F72;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: background 0.15s;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  background: #2E86C1;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1B4F72;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Accordion animation */
+.accordion-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+
+/* Tornado bar animation */
+@keyframes barGrow {
+  from { width: 0; }
+  to { width: var(--bar-width); }
+}
+
+.tornado-bar {
+  transition: width 0.4s ease-in-out;
+}

@@ -1,0 +1,244 @@
+import React, { useState } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+  Cell,
+  ResponsiveContainer,
+} from 'recharts';
+import sensitivityScenarios from '../data/sensitivity_scenarios.json';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function shortenLabel(label) {
+  const map = {
+    'Reference (80%, 12m)': 'Reference',
+    'High Stability (stability=1.0)': 'High stability',
+    'Later Introduction (2040)': 'Later intro (2040)',
+    'Asymptomatic Screening (Prenatal)': 'Asymp. screening',
+    'Intermediate LBP (Prenatal + Intermediate)': 'Intermediate LBP',
+    'CST4 Responder Rate 100%': 'CST4 responders 100%',
+    'Non-BV VDS = 10%': 'Non-BV VDS 10%',
+    'Non-BV VDS = 30%': 'Non-BV VDS 30%',
+  };
+  return map[label] || label;
+}
+
+// ---------------------------------------------------------------------------
+// Prepare data — exclude reference row
+// ---------------------------------------------------------------------------
+
+const hivBase = sensitivityScenarios
+  .filter((s) => s.id !== 'reference')
+  .map((s) => ({
+    label:       shortenLabel(s.label),
+    delta:       s.hiv_delta_median,
+    delta_p5:    s.hiv_delta_p5,
+    delta_p95:   s.hiv_delta_p95,
+    pct_change:  s.hiv_pct_change,
+  }));
+
+const ptbBase = sensitivityScenarios
+  .filter((s) => s.id !== 'reference')
+  .map((s) => ({
+    label:       shortenLabel(s.label),
+    delta:       s.ptb_delta_median,
+    delta_p5:    s.ptb_delta_p5,
+    delta_p95:   s.ptb_delta_p95,
+    pct_change:  s.ptb_pct_change,
+  }));
+
+// ---------------------------------------------------------------------------
+// Custom tooltip
+// ---------------------------------------------------------------------------
+
+function CustomTooltip({ active, payload, showPct }) {
+  if (!active || !payload || payload.length === 0) return null;
+  const d = payload[0]?.payload;
+  if (!d) return null;
+  const value   = showPct ? d.pct_change : d.delta;
+  const isPos   = value >= 0;
+  const fmtVal  = showPct
+    ? `${isPos ? '+' : ''}${value?.toFixed(1)}%`
+    : `${isPos ? '+' : '−'}${Math.abs(Math.round(value)).toLocaleString()}`;
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm font-sans">
+      <p className="font-semibold text-gray-700 mb-1">{d.label}</p>
+      <p className="text-xs text-gray-600">
+        Delta vs reference:{' '}
+        <span className="font-semibold" style={{ color: isPos ? '#3b82f6' : '#f97316' }}>
+          {fmtVal}
+        </span>
+      </p>
+      {!showPct && (
+        <p className="text-xs text-gray-500">
+          95% UI: {Math.round(d.delta_p5).toLocaleString()} to {Math.round(d.delta_p95).toLocaleString()}
+        </p>
+      )}
+      {showPct && (
+        <p className="text-xs text-gray-500">
+          Absolute delta: {d.delta >= 0 ? '+' : '−'}{Math.abs(Math.round(d.delta)).toLocaleString()}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tornado panel
+// ---------------------------------------------------------------------------
+
+function TornadoPanel({ title, data, showPct }) {
+  const values  = data.map((d) => showPct ? d.pct_change : d.delta);
+  const absMax  = Math.max(...values.map(Math.abs)) * 1.15 || 1;
+  const step    = showPct ? 5 : 10000;
+  const domainMin = -Math.ceil(absMax / step) * step;
+  const domainMax =  Math.ceil(absMax / step) * step;
+
+  const sortedData = [...data].sort((a, b) => {
+    const va = showPct ? a.pct_change : a.delta;
+    const vb = showPct ? b.pct_change : b.delta;
+    return va - vb;
+  });
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h3 className="font-serif font-semibold text-brand-blue text-base mb-4">{title}</h3>
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart
+          data={sortedData}
+          layout="vertical"
+          margin={{ top: 8, right: 60, left: 148, bottom: 28 }}
+          barCategoryGap="25%"
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
+          <XAxis
+            type="number"
+            domain={[domainMin, domainMax]}
+            tickFormatter={(v) => {
+              if (showPct) return `${v > 0 ? '+' : ''}${v.toFixed(0)}%`;
+              const abs = Math.abs(v);
+              if (abs >= 1000) return (v / 1000).toFixed(0) + 'k';
+              return v.toLocaleString();
+            }}
+            tick={{ fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+            axisLine={false}
+            tickLine={false}
+            label={{
+              value: showPct ? 'Change vs reference (%)' : 'Delta vs reference (count)',
+              position: 'insideBottom',
+              offset: -16,
+              fontSize: 11,
+              fontFamily: 'IBM Plex Sans',
+              fill: '#6B7280',
+            }}
+          />
+          <YAxis
+            type="category"
+            dataKey="label"
+            tick={{ fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+            axisLine={false}
+            tickLine={false}
+            width={142}
+          />
+          <Tooltip content={<CustomTooltip showPct={showPct} />} />
+          <ReferenceLine x={0} stroke="#9CA3AF" strokeWidth={1.5} />
+          <Bar dataKey={showPct ? 'pct_change' : 'delta'} barSize={16}>
+            {sortedData.map((entry, index) => {
+              const v = showPct ? entry.pct_change : entry.delta;
+              return (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={v >= 0 ? '#3b82f6' : '#f97316'}
+                  opacity={0.85}
+                />
+              );
+            })}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+      {/* Legend */}
+      <div className="flex items-center gap-4 mt-2 text-xs font-sans">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#3b82f6', opacity: 0.85 }} />
+          <span className="text-gray-500">More impact than reference</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#f97316', opacity: 0.85 }} />
+          <span className="text-gray-500">Less impact than reference</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
+export default function SensitivityAnalysis() {
+  const [showPct, setShowPct] = useState(false);
+
+  return (
+    <section id="sensitivity" className="py-16 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <p className="text-xs font-semibold uppercase tracking-widest text-brand-teal mb-2">
+            Sensitivity analysis
+          </p>
+          <h2 className="section-heading">Parameter sensitivity</h2>
+          <p className="section-subheading max-w-2xl">
+            Change in averted outcomes vs the reference scenario (80% efficacy, 12-month
+            duration) for each sensitivity assumption. Positive values indicate more benefit
+            than the reference.
+          </p>
+        </div>
+
+        {/* Toggle */}
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-sm font-medium text-gray-600 font-sans">Show:</span>
+          <div className="flex rounded-full border border-gray-200 overflow-hidden text-sm font-sans">
+            <button
+              onClick={() => setShowPct(false)}
+              className="px-3 py-1 transition-colors duration-150"
+              style={!showPct
+                ? { backgroundColor: '#0E7490', color: '#fff' }
+                : { backgroundColor: '#fff', color: '#6B7280' }}
+            >
+              Absolute delta
+            </button>
+            <button
+              onClick={() => setShowPct(true)}
+              className="px-3 py-1 transition-colors duration-150"
+              style={showPct
+                ? { backgroundColor: '#0E7490', color: '#fff' }
+                : { backgroundColor: '#fff', color: '#6B7280' }}
+            >
+              % change
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TornadoPanel
+            title="HIV infections averted — delta vs reference"
+            data={hivBase}
+            showPct={showPct}
+          />
+          <TornadoPanel
+            title="Preterm births averted — delta vs reference"
+            data={ptbBase}
+            showPct={showPct}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
