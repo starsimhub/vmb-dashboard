@@ -82,8 +82,8 @@ export default function Overview() {
           {/* Quick-stat callouts */}
           <div className="mt-10 grid grid-cols-3 gap-6 pt-8 border-t border-gray-100">
             {[
-              { value: '2,400', label: 'Scenarios modeled' },
-              { value: '20-year', label: 'Primary time horizon' },
+              { value: 'South Africa', label: 'Modeled setting' },
+              { value: '15-year', label: 'Primary time horizon (2035–2050)' },
               { value: '100k', label: 'Agent population' },
             ].map((stat) => (
               <div key={stat.label}>
