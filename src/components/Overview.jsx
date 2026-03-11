@@ -17,7 +17,7 @@ export default function Overview() {
 
           {/* Authors / institution */}
           <p className="text-sm text-gray-500 mb-8 font-sans">
-            [AUTHOR] &nbsp;·&nbsp; [INSTITUTION] &nbsp;·&nbsp;
+            Jamie Cohen, Lillian Dillard &nbsp;·&nbsp; Institute for Disease Modeling &nbsp;·&nbsp;
             <a href="[MANUSCRIPT_URL]" className="text-brand-teal hover:underline">
               Preprint
             </a>
@@ -26,7 +26,7 @@ export default function Overview() {
               Supplementary appendix
             </a>
             &nbsp;·&nbsp;
-            <a href="[GITHUB_URL]" className="text-brand-teal hover:underline">
+            <a href="https://github.com/starsimhub/vmb_gr_2026q1" className="text-brand-teal hover:underline">
               Code
             </a>
           </p>

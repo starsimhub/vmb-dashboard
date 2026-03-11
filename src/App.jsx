@@ -6,7 +6,6 @@ import SensitivityAnalysis from './components/SensitivityAnalysis.jsx';
 import RCTEndpoints from './components/RCTEndpoints.jsx';
 import KeyFindings from './components/KeyFindings.jsx';
 import CostEffectiveness from './components/CostEffectiveness.jsx';
-import RCTBridge from './components/RCTBridge.jsx';
 import Methods from './components/Methods.jsx';
 import Footer from './components/Footer.jsx';
 
@@ -37,12 +36,6 @@ export default function App() {
         <div className="h-px bg-gradient-to-r from-transparent via-brand-blue to-transparent opacity-20" />
 
         <KeyFindings />
-
-        <div className="h-px bg-gradient-to-r from-transparent via-brand-teal to-transparent opacity-20" />
-
-        <RCTBridge />
-
-        <div className="h-px bg-gradient-to-r from-transparent via-brand-blue to-transparent opacity-20" />
 
         <Methods />
       </main>

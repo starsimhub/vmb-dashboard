@@ -2,6 +2,194 @@ import React, { useState } from 'react';
 
 const ACCORDION_SECTIONS = [
   {
+    id: 'daly-attribution',
+    title: 'DALY attribution',
+    content: (
+      <div className="space-y-5 text-sm text-gray-600 font-sans leading-relaxed">
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+          Source: Gates Foundation / IPM cost-effectiveness analysis, March 2026 (preliminary).
+          Analysis period 2026–2050, South Africa only.
+        </p>
+
+        {/* HIV */}
+        <div>
+          <h4 className="font-semibold text-gray-800 mb-2">HIV infections averted</h4>
+          <p className="mb-2">
+            A conservative estimate of <strong>15 DALYs per HIV infection averted</strong> was
+            used, informed by IHME Global Burden of Disease 2023 data filtered to South Africa
+            (GBD 2023 estimate: ~17 DALYs/case). The WHO Global Health Observatory suggests
+            approximately 30 DALYs/case globally (crude approximation); the GBD South Africa
+            figure is more appropriate given high ART coverage in this setting.
+          </p>
+          <p className="mb-3">
+            IHME disability weights for HIV: symptomatic HIV (DW&nbsp;=&nbsp;0.274), AIDS with
+            ARVs (DW&nbsp;=&nbsp;0.078), AIDS without ARVs (DW&nbsp;=&nbsp;0.582). HIV treatment
+            coverage was derived from UNAIDS 2025 country reports (adult ART coverage: 79%).
+          </p>
+          <div className="overflow-x-auto">
+            <table className="text-xs w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700 border border-gray-200">Source</th>
+                  <th className="text-right px-3 py-2 font-semibold text-gray-700 border border-gray-200">DALYs/case (South Africa)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['IHME GBD 2023', '~17'],
+                  ['WHO Global Health Observatory (global)', '~30'],
+                  ['This analysis (conservative)', '15'],
+                ].map(([src, val]) => (
+                  <tr key={src}>
+                    <td className="px-3 py-1.5 border border-gray-200 text-gray-600">{src}</td>
+                    <td className="px-3 py-1.5 border border-gray-200 text-gray-700 text-right font-medium">{val}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* PTB */}
+        <div>
+          <h4 className="font-semibold text-gray-800 mb-2">Preterm births averted</h4>
+          <p className="mb-2">
+            <strong>2.74 DALYs per preterm birth averted</strong> was applied, derived from
+            IHME GBD 2023 data for South Africa. DALY attribution is limited to the IHME
+            assessment of preterm birth DALYs per case because gestational age data are not
+            available in the model; this method is consistent with MNCHN and other foundation
+            valuations including PTB.
+          </p>
+          <p className="text-xs text-gray-400 italic">
+            Note: new IHME Future Health Scenarios data and methods are anticipated to enable
+            trend-based incidence-per-case estimates in future analyses.
+          </p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'costing',
+    title: 'Health system costs averted & product costing',
+    content: (
+      <div className="space-y-5 text-sm text-gray-600 font-sans leading-relaxed">
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+          Preliminary results. PTB costing inputs are subject to revision pending the UW START
+          systematic literature review (expected completion within 1 month of March 2026).
+        </p>
+
+        {/* HIV HSCA */}
+        <div>
+          <h4 className="font-semibold text-gray-800 mb-2">HIV: health system costs averted</h4>
+          <p className="mb-3">
+            Lifetime health system costs averted per HIV infection prevented were estimated from
+            MIHPSA costing data (provided by Avenir Health). ART was assumed to represent{' '}
+            <strong>43% of total yearly costs per person living with HIV</strong> (Gutierrez et
+            al., <em>Lancet</em>, 2004). Treatment duration assumptions: 30 years for adult
+            infections, 15 years for paediatric cases averted, and 10 years for cases in persons
+            aged 50+. Costs were adjusted for treatment coverage from UNAIDS 2025 country reports.
+          </p>
+          <div className="overflow-x-auto mb-2">
+            <table className="text-xs w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700 border border-gray-200">Parameter</th>
+                  <th className="text-right px-3 py-2 font-semibold text-gray-700 border border-gray-200">South Africa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['Yearly adult ART cost', '$215.40'],
+                  ['Yearly paediatric ART cost', '$236.70'],
+                  ['Adult ART coverage', '79%'],
+                  ['Paediatric ART coverage', '67%'],
+                  ['Lifetime HSCA per adult HIV case averted', '$11,872'],
+                  ['Lifetime HSCA per paediatric HIV case averted', '$15,601'],
+                  ['Lifetime HSCA per HIV case averted (age 50+)', '$3,957'],
+                ].map(([param, val]) => (
+                  <tr key={param}>
+                    <td className="px-3 py-1.5 border border-gray-200 text-gray-600">{param}</td>
+                    <td className="px-3 py-1.5 border border-gray-200 text-gray-700 text-right font-medium tabular-nums">{val}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-gray-400">
+            HSCA associated with HIV treatment and care include costs beyond ART alone (testing
+            and counselling, OI prophylaxis, OI treatment, ART monitoring, universal precautions,
+            support activities, palliative care, other programme costs). ART represents ~43% of
+            the total in this decomposition.
+          </p>
+        </div>
+
+        {/* PTB HSCA */}
+        <div>
+          <h4 className="font-semibold text-gray-800 mb-2">Preterm birth: health system costs averted</h4>
+          <p className="mb-2">
+            A cost of <strong>$447.68 per preterm birth averted</strong> (preliminary) was applied,
+            derived from a South African cost-effectiveness analysis of a pregnancy support grant
+            (Moolla et al., <em>PLOS Global Public Health</em>, 2024). Costs were converted to USD
+            and adjusted for inflation. This estimate is under review: the Gates Foundation is
+            funding a UW START systematic literature review of preterm birth direct medical costs
+            for sub-Saharan Africa that will serve as the reference standard.
+          </p>
+          <p className="text-xs text-gray-500 mb-1">
+            For context, a 2020 systematic review (Mori et al., <em>Health Econ Rev</em>) reported
+            health system costs for preterm/LBW care in Ghana, Mozambique, and Nigeria of
+            approximately $514 (2018 USD) = $542 (2021 USD), consistent with the current estimate.
+          </p>
+          <p className="text-xs text-gray-400">
+            Reference: Moolla A, Mdewa W, Erzse A, Hofman K, Thsehla E, et al. (2024). A
+            cost-effectiveness analysis of a South African pregnancy support grant.{' '}
+            <em>PLOS Global Public Health</em> 4(2): e0002781.
+          </p>
+        </div>
+
+        {/* Product costing */}
+        <div>
+          <h4 className="font-semibold text-gray-800 mb-2">LBP product costing assumptions</h4>
+          <p className="mb-3">
+            Due to high uncertainty in costing assumptions, a wide range of fully loaded costs
+            (COGs + presentation/manufacturing + delivery) from $10–$40 per course were evaluated
+            in the ICER analysis. Key reference points:
+          </p>
+          <div className="overflow-x-auto">
+            <table className="text-xs w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700 border border-gray-200">Component</th>
+                  <th className="text-right px-3 py-2 font-semibold text-gray-700 border border-gray-200">Estimate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['Procurement cost (TPP v2.0 target)', '$6/course'],
+                  ['Cold chain cost per course', '~$0.10–$0.38'],
+                  ['Delivery cost (VDS/syndromic pathway)', 'Unknown'],
+                  ['Delivery cost (ANC pathway)', 'Unknown'],
+                  ['Additional diagnostic (Nugent/microscopy)', '$3.50 ($6.10 incl. overhead)'],
+                  ['Product introduction year', '2035'],
+                  ['Scale-up period', '5 years'],
+                  ['Peak treatment/prevention ratio (PTR S)', '0.1'],
+                ].map(([comp, est]) => (
+                  <tr key={comp}>
+                    <td className="px-3 py-1.5 border border-gray-200 text-gray-600">{comp}</td>
+                    <td className="px-3 py-1.5 border border-gray-200 text-gray-700 text-right">{est}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Diagnostic cost reference: Frontiers in Public Health (2023). Cold chain reference:
+            Heroza / Fraser-Edoka, <em>Influenza &amp; Resp Viruses</em> (2022).
+          </p>
+        </div>
+      </div>
+    ),
+  },
+  {
     id: 'starsim',
     title: 'Starsim framework overview',
     content: (
@@ -114,6 +302,7 @@ const ACCORDION_SECTIONS = [
           <a href="[APPENDIX_URL]" className="text-brand-teal hover:underline">
             supplementary appendix
           </a>
+          {' '}(forthcoming)
           .
         </p>
       </div>
@@ -176,8 +365,9 @@ export default function Methods() {
           </p>
           <h2 className="section-heading">Model and methods</h2>
           <p className="section-subheading max-w-2xl">
-            Technical details on the simulation framework, model structure, and calibration data
-            sources. Click each section to expand.
+            Technical details on the simulation framework, model structure, calibration data
+            sources, DALY attribution, and health system costing assumptions. Click each section
+            to expand.
           </p>
         </div>
 
@@ -197,9 +387,8 @@ export default function Methods() {
           <div className="mt-6 bg-gray-50 rounded-xl border border-gray-200 px-5 py-4">
             <p className="text-xs text-gray-500 font-sans leading-relaxed">
               <span className="font-semibold text-gray-700">Cite this work:</span>{' '}
-              [AUTHOR] et al. "Population impact of vaginal microbiome interventions on HIV
-              incidence and preterm birth: an agent-based modeling study." <em>[Journal]</em>, [Year].
-              DOI: [MANUSCRIPT_URL]
+              Cohen J, Dillard L, et al. "Population impact of vaginal microbiome interventions on HIV
+              incidence and preterm birth: an agent-based modeling study." <em>Manuscript in preparation</em>, 2026.
             </p>
           </div>
         </div>

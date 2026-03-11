@@ -37,7 +37,7 @@ export default function Footer() {
               {[
                 { label: 'Manuscript (preprint)', href: '[MANUSCRIPT_URL]' },
                 { label: 'Supplementary appendix', href: '[APPENDIX_URL]' },
-                { label: 'GitHub repository', href: '[GITHUB_URL]' },
+                { label: 'GitHub repository', href: 'https://github.com/starsimhub/vmb_gr_2026q1' },
                 { label: 'Starsim framework', href: 'https://github.com/starsimhub/starsim' },
               ].map((link) => (
                 <li key={link.label}>
@@ -58,16 +58,16 @@ export default function Footer() {
               Contact
             </h4>
             <p className="text-sm text-blue-200 font-sans leading-relaxed mb-1">
-              [AUTHOR]
+              Jamie Cohen, Lillian Dillard
             </p>
             <p className="text-sm text-blue-200 font-sans leading-relaxed mb-1">
-              [INSTITUTION]
+              Institute for Disease Modeling
             </p>
             <a
-              href="mailto:[CONTACT_EMAIL]"
+              href="mailto:jamie.cohen@gatesfoundation.org"
               className="text-sm text-blue-200 hover:text-white transition-colors font-sans"
             >
-              [CONTACT_EMAIL]
+              jamie.cohen@gatesfoundation.org
             </a>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function Footer() {
         <div className="border-t border-blue-700 pt-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <p className="text-xs text-blue-300 font-sans">
-              © [YEAR] [INSTITUTION]. All rights reserved.
+              © 2026 Institute for Disease Modeling. All rights reserved.
             </p>
             <p className="text-xs text-blue-300 font-sans">
               Built with{' '}

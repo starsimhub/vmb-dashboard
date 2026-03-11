@@ -7,7 +7,7 @@ const NAV_LINKS = [
   { label: 'Sensitivity',  href: '#sensitivity' },
   { label: 'Cost-effectiveness', href: '#ce' },
   { label: 'Key findings', href: '#findings' },
-  { label: 'Methods',      href: '#methods' },
+  { label: 'Methods',     href: '#methods' },
 ];
 
 export default function Header() {
