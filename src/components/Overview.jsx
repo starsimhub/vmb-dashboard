@@ -12,7 +12,7 @@ export default function Overview() {
 
           {/* Title */}
           <h1 className="font-serif text-4xl font-semibold text-brand-blue leading-tight mb-4">
-            Population impact of vaginal microbiome interventions on HIV incidence and preterm birth
+            Vaginal microbiome therapies could curb HIV and preterm births — an IDM model
           </h1>
 
           {/* Authors / institution */}
@@ -34,48 +34,62 @@ export default function Overview() {
           {/* Abstract-style paragraphs */}
           <div className="space-y-5 text-gray-700 leading-relaxed text-base font-sans">
             <p>
-              Bacterial vaginosis — a disruption of the vaginal microbiome affecting up to 50% of
-              women of reproductive age in sub-Saharan Africa — is independently associated with
-              increased risk of both HIV acquisition and spontaneous preterm birth. A new class of
-              live biotherapeutic products (LBPs) aims to restore a protective,{' '}
-              <em>Lactobacillus crispatus</em>–dominant vaginal microbiome (known as Community State
-              Type I, or CST I), but critical questions remain about what product characteristics
-              would be needed to deliver meaningful population-level health impact, and how clinical
-              trial endpoints should be defined to capture that potential.
+              Bacterial vaginosis (BV) — a disruption of the vaginal microbiome that affects up to
+              half of women of reproductive age in sub-Saharan Africa — has been independently
+              linked to a heightened risk of HIV infection and spontaneous preterm birth. Now,
+              researchers at the Institute for Disease Modeling (IDM) report new modeling results
+              that suggest a next generation of vaginal microbiome therapies could significantly
+              reduce both.
             </p>
 
             <p>
-              This study uses a population-level agent-based model built in the Starsim framework
-              to simulate the introduction of vaginal microbiome interventions among women aged
-              15–49 in South Africa. The model integrates BV natural history, HIV transmission
-              dynamics, and pregnancy and birth outcomes to project the health impact of
-              hypothetical LBPs across a range of product profiles — varying in efficacy, duration
-              of effect, and probability of durable CST I establishment. Rather than evaluating a
-              single product candidate, the model maps the landscape of product characteristics to
-              population outcomes, identifying the minimum viable product profiles for HIV
-              prevention, preterm birth reduction, and combined impact.
+              The therapies, known as live biotherapeutic products (LBPs), are designed to restore
+              a protective vaginal microbiome dominated by <em>Lactobacillus crispatus</em>,
+              referred to as Community State Type I (CST I). While early clinical research has
+              shown promise, major questions have remained about what product characteristics would
+              be necessary to achieve meaningful impact at scale — and how clinical trials should
+              define success.
             </p>
 
             <p>
-              A central finding is that the pathways to HIV prevention and preterm birth prevention
-              diverge sharply in what they require of a product. Reducing population-level HIV
-              incidence demands a long-acting intervention — products with fewer than 12 months of
-              sustained effect show minimal impact on HIV regardless of their efficacy against BV
-              recurrence. In contrast, preterm birth reduction is driven primarily by efficacy:
-              even a short-acting product administered during pregnancy can meaningfully reduce
-              preterm births if it is effective at resolving BV. Across both outcomes, the single
-              strongest predictor of population health impact is the probability of durable CST I
-              establishment — the restoration of a stable,{' '}
+              To answer those questions, IDM scientists developed a population-level agent-based
+              model using the Starsim framework to simulate the introduction of vaginal microbiome
+              interventions among South African women aged 15 to 49. The model integrates the
+              natural history of BV, HIV transmission dynamics, and pregnancy and birth outcomes,
+              allowing researchers to test a wide range of hypothetical product profiles.
+            </p>
+
+            <p>
+              Rather than evaluating a single product candidate, the team mapped how variations in
+              the probability and duration of establishing CST I translate into population-level
+              outcomes. The objective was to identify the minimum viable product profiles needed to
+              reduce HIV incidence, lower preterm birth rates, or achieve both.
+            </p>
+
+            <p>
+              The findings show that the requirements for preventing HIV and preventing preterm
+              birth differ sharply. To reduce HIV incidence at the population level, durability is
+              critical — products that provide less than 12 months of sustained effect produce
+              minimal impact on HIV transmission, regardless of how effectively they prevent BV
+              recurrence in the short term. In contrast, reducing preterm birth depends primarily
+              on efficacy: even a short-acting product administered during pregnancy can
+              meaningfully lower preterm birth rates if it effectively resolves BV during that
+              window.
+            </p>
+
+            <p>
+              Across both outcomes, the single strongest predictor of impact was the probability of
+              durable CST I establishment — the successful restoration of a stable,{' '}
               <em>Lactobacillus crispatus</em>–dominant microbiome that persists after treatment
-              ends. This finding provided quantitative support for a strategic decision to reframe
-              the primary clinical trial endpoint from BV recurrence reduction to durable
-              microbiome cure anchored on CST I.
+              ends.
             </p>
 
             <p>
-              This dashboard presents the full scenario results interactively, allowing users to
-              explore how different product profiles translate to projected health outcomes and
-              cost-effectiveness estimates across time horizons.
+              The modeling results have already shaped research strategy. Based on the findings,
+              investigators have shifted the primary endpoint of planned clinical trials from simply
+              reducing BV recurrence to demonstrating a durable microbiome "cure" anchored in
+              sustained CST I dominance — a measure more closely aligned with long-term public
+              health impact.
             </p>
           </div>
 
