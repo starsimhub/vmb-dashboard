@@ -93,18 +93,6 @@ function CustomLegend() {
   return (
     <div className="flex flex-wrap items-center gap-4 text-xs font-sans mt-2">
       <div className="flex items-center gap-1.5">
-        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: efficacyColor(50), opacity: 0.8 }} />
-        <span className="text-gray-600">50% efficacy</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: efficacyColor(65), opacity: 0.8 }} />
-        <span className="text-gray-600">65% efficacy</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: efficacyColor(80), opacity: 0.8 }} />
-        <span className="text-gray-600">80% efficacy</span>
-      </div>
-      <div className="flex items-center gap-1.5">
         <div className="h-3 flex items-center">
           <div className="w-6 border-t-2 border-dashed border-gray-400" />
         </div>
@@ -114,11 +102,7 @@ function CustomLegend() {
         <svg width="14" height="14" viewBox="0 0 14 14" className="flex-shrink-0">
           <polygon points="7,0 14,7 7,14 0,7" fill="#374151" opacity="0.85" />
         </svg>
-        <span className="text-gray-600">CST I (◆ marker)</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <div className="w-3 h-2 rounded-sm bg-gray-300" />
-        <span className="text-gray-600">Nugent 0–3 (bar)</span>
+        <span className="text-gray-600">CST I prevalence at 6 months</span>
       </div>
     </div>
   );
@@ -143,7 +127,7 @@ export default function RCTEndpoints() {
           <p className="section-subheading max-w-2xl">
             Predicted durable cure endpoints at 6 months post-treatment for each efficacy ×
             duration scenario. Bars show Nugent score 0–3 (% participants); diamonds show CST I
-            (Lactobacillus crispatus-dominant) establishment rate.
+            (<em>Lactobacillus crispatus</em>-dominant) prevalence at 6 months.
           </p>
         </div>
 
@@ -178,6 +162,12 @@ export default function RCTEndpoints() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <p className="text-sm font-semibold text-gray-700 font-sans mb-1">
+            Durable cure at 6 months by Nugent score 0–3 (bars) and CST I prevalence (◆)
+          </p>
+          <p className="text-xs text-gray-400 font-sans mb-4">
+            By product efficacy and duration; each row is one scenario
+          </p>
           <ResponsiveContainer width="100%" height={420}>
             <BarChart
               data={chartData}

@@ -19,10 +19,10 @@ import sensitivityScenarios from '../data/sensitivity_scenarios.json';
 function shortenLabel(label) {
   const map = {
     'Reference (80%, 12m)': 'Reference',
-    'High Stability (stability=1.0)': 'High stability',
+    'High Stability (stability=1.0)': 'Low LBP fitness',
     'Later Introduction (2040)': 'Later intro (2040)',
-    'Asymptomatic Screening (Prenatal)': 'Asymp. screening',
-    'Intermediate LBP (Prenatal + Intermediate)': 'Intermediate LBP',
+    'Asymptomatic Screening (Prenatal)': 'Asymptomatic prenatal screening',
+    'Intermediate LBP (Prenatal + Intermediate)': 'Asymptomatic prenatal screening + LBP for Nugent 4–6',
     'CST4 Responder Rate 100%': 'CST4 responders 100%',
     'Non-BV VDS = 10%': 'Non-BV VDS 10%',
     'Non-BV VDS = 30%': 'Non-BV VDS 30%',
@@ -72,7 +72,7 @@ function CustomTooltip({ active, payload, showPct }) {
       <p className="font-semibold text-gray-700 mb-1">{d.label}</p>
       <p className="text-xs text-gray-600">
         Delta vs reference:{' '}
-        <span className="font-semibold" style={{ color: isPos ? '#3b82f6' : '#f97316' }}>
+        <span className="font-semibold" style={{ color: isPos ? '#16a34a' : '#dc2626' }}>
           {fmtVal}
         </span>
       </p>
@@ -114,7 +114,7 @@ function TornadoPanel({ title, data, showPct }) {
         <BarChart
           data={sortedData}
           layout="vertical"
-          margin={{ top: 8, right: 60, left: 148, bottom: 28 }}
+          margin={{ top: 8, right: 24, left: 148, bottom: 28 }}
           barCategoryGap="25%"
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
@@ -155,7 +155,7 @@ function TornadoPanel({ title, data, showPct }) {
               return (
                 <Cell
                   key={`cell-${index}`}
-                  fill={v >= 0 ? '#3b82f6' : '#f97316'}
+                  fill={v >= 0 ? '#16a34a' : '#dc2626'}
                   opacity={0.85}
                 />
               );
@@ -166,11 +166,11 @@ function TornadoPanel({ title, data, showPct }) {
       {/* Legend */}
       <div className="flex items-center gap-4 mt-2 text-xs font-sans">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#3b82f6', opacity: 0.85 }} />
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#16a34a', opacity: 0.85 }} />
           <span className="text-gray-500">More impact than reference</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#f97316', opacity: 0.85 }} />
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#dc2626', opacity: 0.85 }} />
           <span className="text-gray-500">Less impact than reference</span>
         </div>
       </div>
@@ -226,7 +226,7 @@ export default function SensitivityAnalysis() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <TornadoPanel
             title="HIV infections averted — delta vs reference"
             data={hivBase}
