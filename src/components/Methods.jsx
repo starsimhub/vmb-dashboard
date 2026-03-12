@@ -304,13 +304,9 @@ const ACCORDION_SECTIONS = [
         </p>
         <ul className="space-y-2 ml-4">
           {[
-            'HIV incidence and prevalence by age: PHIA household surveys (Kenya, South Africa, Uganda, 2016–2020)',
+            'HIV incidence and prevalence by age: UNAIDS estimates for South Africa',
             'BV prevalence and CST distribution: WISH cohort, CAPRISA cohort, and pooled meta-analysis (Ravel et al. 2011)',
             'CST transition rates: LACTIN-V trial longitudinal microbiome data and unpublished cohort follow-up',
-            'HIV–BV risk association: systematic review and meta-analysis (Muzny et al. 2019; Mitchell et al. 2021)',
-            'PTB–BV risk association: Cochrane review (Brocklehurst et al. 2013) and PROMISE trial sub-study',
-            'Sexual behavior parameters: Population-based surveys (DHS, NATSAL) and published network studies',
-            'Pregnancy rates and gestational age distribution: WHO global health estimates, regional hospital registers',
           ].map((item, idx) => (
             <li key={idx} className="flex items-start gap-2.5">
               <div className="w-1.5 h-1.5 rounded-full bg-brand-teal mt-1.5 flex-shrink-0 opacity-70" />
