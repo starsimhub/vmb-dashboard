@@ -87,21 +87,29 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
           fontSize={11} fontFamily="IBM Plex Serif, serif" fontWeight={700} fill="#1e3a5f">
           {entry.name}
         </text>
+        <text x={x + 8} y={y} dy={4} textAnchor="start"
+          fontSize={9} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
+          ⓘ
+        </text>
       </g>
     );
   }
 
   const desc      = efficacyDescriptions[entry.efficacy];
   const meetsHIV  = entry.hivPct != null && entry.hivPct >= hivThreshold;
-  const dotColor  = meetsHIV ? '#16a34a' : '#d1d5db'; // green if meets, light gray if not
+  const dotColor  = meetsHIV ? '#16a34a' : '#d1d5db';
 
   return (
     <g {...handlers(desc, entry.label)}>
       {/* pass/fail dot — sits just left of the label text */}
       <circle cx={x - 80} cy={y + 1} r={4} fill={dotColor} />
-      <text x={x - 2} y={y} dy={4} textAnchor="end"
+      <text x={x - 14} y={y} dy={4} textAnchor="end"
         fontSize={11} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
         {entry.label}
+      </text>
+      <text x={x - 2} y={y} dy={4} textAnchor="end"
+        fontSize={9} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
+        ⓘ
       </text>
     </g>
   );

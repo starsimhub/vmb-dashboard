@@ -53,9 +53,13 @@ function DurationTick({ x, y, payload, setLabelTooltip }) {
       onMouseLeave={() => setLabelTooltip(null)}
       onMouseMove={(e) => setLabelTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
     >
-      <text x={x} y={y} dy={4} textAnchor="end"
+      <text x={x - 10} y={y} dy={4} textAnchor="end"
         fontSize={12} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
         {payload.value}
+      </text>
+      <text x={x - 2} y={y} dy={4} textAnchor="end"
+        fontSize={9} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
+        ⓘ
       </text>
     </g>
   );
@@ -84,6 +88,7 @@ function EfficacyLegend({ payload, setLabelTooltip }) {
           >
             <div style={{ width: 12, height: 12, backgroundColor: entry.color, borderRadius: 2 }} />
             <span style={{ color: '#374151' }}>{entry.value}</span>
+            {desc && <span style={{ fontSize: 9, color: '#4B5563', lineHeight: 1 }}>ⓘ</span>}
           </div>
         );
       })}

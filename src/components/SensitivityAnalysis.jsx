@@ -109,7 +109,7 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip }) {
           textAnchor="end"
           fontSize={9}
           fontFamily="IBM Plex Sans, sans-serif"
-          fill="#9CA3AF"
+          fill="#4B5563"
         >
           ⓘ
         </text>
