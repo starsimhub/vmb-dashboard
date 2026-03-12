@@ -103,12 +103,12 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
     <g {...handlers(desc, entry.label)}>
       {/* pass/fail dot — sits just left of the label text */}
       <circle cx={x - 80} cy={y + 1} r={4} fill={dotColor} />
-      <text x={x - 14} y={y} dy={4} textAnchor="end"
+      <text x={x - 8} y={y} dy={4} textAnchor="end"
         fontSize={11} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
         {entry.label}
       </text>
-      <text x={x - 14} y={y} dy={4} textAnchor="start"
-        fontSize={9} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
+      <text x={x - 6} y={y} dy={4} textAnchor="start"
+        fontSize={10} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
         ⓘ
       </text>
     </g>
@@ -345,7 +345,7 @@ export default function RCTEndpoints() {
                 tickLine={false}
                 width={125}
               />
-              <Tooltip content={<CustomTooltip tppThreshold={tppThreshold} hivThreshold={hivThreshold} />} />
+              <Tooltip className="pl-2" content={<CustomTooltip tppThreshold={tppThreshold} hivThreshold={hivThreshold} />} />
 
               <ReferenceLine
                 x={tppThreshold}
