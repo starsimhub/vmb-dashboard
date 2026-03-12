@@ -267,6 +267,18 @@ const ACCORDION_SECTIONS = [
             during early pregnancy.
           </p>
         </div>
+        <div>
+          <h4 className="font-semibold text-gray-800 mb-1.5">Care-seeking and intervention delivery</h4>
+          <p>
+            In the reference scenario, LBP is delivered through a symptom-driven care-seeking
+            pathway. Women with vaginal symptoms seek care at an assumed rate of{' '}
+            <strong>20% per symptomatic episode</strong>. At each care-seeking encounter, women
+            presenting with BV (CST IV) are eligible to receive the LBP. This care-seeking rate
+            is applied uniformly across the modeled population and represents the primary delivery
+            channel in all base-case and efficacy × duration scenarios. Sensitivity scenarios also
+            explore asymptomatic prenatal screening as an additional pathway.
+          </p>
+        </div>
       </div>
     ),
   },
@@ -298,12 +310,7 @@ const ACCORDION_SECTIONS = [
         <p className="pt-2">
           Calibration targets were matched using approximate Bayesian computation (ABC) with a
           sequential Monte Carlo sampler, retaining parameter sets within the 10th percentile of
-          distance to all targets simultaneously. Full calibration diagnostics are available in the{' '}
-          <a href="[APPENDIX_URL]" className="text-brand-teal hover:underline">
-            supplementary appendix
-          </a>
-          {' '}(forthcoming)
-          .
+          distance to all targets simultaneously. Full calibration diagnostics will be available in the supplementary appendix (forthcoming).
         </p>
       </div>
     ),
