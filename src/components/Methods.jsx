@@ -251,13 +251,36 @@ const ACCORDION_SECTIONS = [
         </div>
         <div>
           <h4 className="font-semibold text-gray-800 mb-1.5">Pregnancy and PTB</h4>
-          <p>
+          <p className="mb-3">
             Agents become pregnant at an empirically calibrated monthly rate. Gestational age at
             birth is drawn from a mixed-effects model conditioned on CST state during pregnancy.
             BV / CST IV during the second trimester carries a 1.6-fold elevated PTB risk (OR from
             meta-analysis). Intervention products reduce PTB risk by shifting CST state prior to or
             during early pregnancy.
           </p>
+          <p className="mb-3">
+            PTB risk is modeled through cumulative inflammation accumulation across the three
+            pregnancy trimesters. Each month, a woman's CST state contributes an inflammation cost:
+            CST IV contributes the most (up to 2.0/month in trimester 1), CST III contributes
+            intermediate inflammation, and CST I contributes none. The cumulative inflammation
+            score at delivery is translated to a relative PTB risk via a linear function
+            (RR = 1 + score/16), illustrated in the figure below. Women who maintain CST I
+            throughout pregnancy have no excess risk; those with persistent CST IV can reach
+            RR ≈ 1.7×.
+          </p>
+          <figure className="mt-2">
+            <img
+              src="/pregnancy_ptb.png"
+              alt="Inflammation accumulation during pregnancy and pre-term birth risk mechanism"
+              className="w-full rounded-lg border border-gray-100"
+            />
+            <figcaption className="text-xs text-gray-400 mt-1.5 italic">
+              Inflammation accumulation during pregnancy and pre-term birth risk mechanism.
+              Panel A: monthly inflammation cost by CST and trimester. Panel B: translation of
+              cumulative inflammation score to relative PTB risk. Panels C–G: example trajectories
+              for different CST pathways through pregnancy.
+            </figcaption>
+          </figure>
         </div>
         <div>
           <h4 className="font-semibold text-gray-800 mb-1.5">Care-seeking and intervention delivery</h4>
