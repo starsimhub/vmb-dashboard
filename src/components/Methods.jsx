@@ -231,12 +231,13 @@ const ACCORDION_SECTIONS = [
         <div>
           <h4 className="font-semibold text-gray-800 mb-1.5">BV natural history</h4>
           <p>
-            Vaginal microbiome state is represented as one of five community state types (CST I–V),
-            with empirically calibrated monthly transition probabilities. CST IV (
-            <em>Gardnerella</em>-dominant, dysbiotic) is the primary BV state. CST I (
-            <em>L. crispatus</em>-dominant) is the protective state. Transition rates are modified by
-            sexual behavior, menstruation, and antibiotic use. Intervention products modify the CST
-            IV → CST I transition probability.
+            Vaginal microbiome state is represented as one of three community state types (CST I,
+            III, and IV), with empirically calibrated monthly transition probabilities. CST IV (
+            <em>Gardnerella</em> or <em>Prevotella</em>-dominant, dysbiotic) is the primary BV
+            state. CST I (<em>L. crispatus</em>-dominant) is the protective state. CST III (
+            <em>L. iners</em>-dominant) is a transient and intermediary state. Transition rates are
+            modified by sexual behavior, vaginal health and hygiene, and predisposition to
+            transitions.
           </p>
         </div>
         <div>
