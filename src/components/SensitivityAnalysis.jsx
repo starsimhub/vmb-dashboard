@@ -35,13 +35,13 @@ function shortenLabel(label) {
 // ---------------------------------------------------------------------------
 
 const descriptions = {
-  'Low LBP fitness': 'BV recurrence is eliminated in LBP-colonized women (stability = 1.0), representing a best-case scenario for competitive exclusion of BV-associated bacteria.',
-  'Later intro (2040)': 'Product market introduction delayed by 5 years to 2040, reducing the intervention window from 15 to 10 years before the 2050 horizon.',
-  'Asymptomatic prenatal screening': 'Women are screened for BV at prenatal visits regardless of symptoms, adding a care-seeking pathway beyond symptom-driven treatment.',
-  'Asymptomatic prenatal screening + LBP for Nugent 4–6': 'Prenatal screening with treatment extended to women with intermediate flora (Nugent 4–6) in addition to those with full BV (Nugent 7–10).',
-  'LBP effective in MTZ non-responders': 'LBP successfully treats all CST4-positive women, including those who do not respond to standard metronidazole therapy.',
-  '−10% non-BV vaginal symptoms': 'Baseline rate of vaginal symptoms not caused by BV is reduced by 10 percentage points, decreasing care-seeking among women without BV.',
-  '+10% non-BV vaginal symptoms': 'Baseline rate of vaginal symptoms not caused by BV is increased by 10 percentage points, increasing care-seeking among women without BV.',
+  'Low LBP fitness': 'Reduced competitive fitness of the LBP strain against BV-associated bacteria, leading to less durable colonization and higher probability of reversion to BV.',
+  'Later intro (2040)': 'Delays product availability by 5 years, reducing the cumulative intervention window within the modeled time horizon.',
+  'Asymptomatic prenatal screening': 'Women are screened for BV at prenatal visits regardless of symptoms, creating an additional care-seeking pathway beyond symptom-driven presentation.',
+  'Asymptomatic prenatal screening + LBP for Nugent 4–6': 'Extends prenatal BV screening and LBP treatment eligibility to women with intermediate Nugent scores (4–6), not just those meeting the full BV diagnosis threshold (Nugent 7+).',
+  'LBP effective in MTZ non-responders': 'Allows LBP to colonize and establish CST I even in women who fail to clear BV with metronidazole, decoupling LBP efficacy from antibiotic response.',
+  '−10% non-BV vaginal symptoms': 'Varies the rate at which women present with vaginal symptoms unrelated to BV (e.g., yeast infections, irritation), which affects how often BV is incidentally detected and treated through symptom-driven care-seeking.',
+  '+10% non-BV vaginal symptoms': 'Varies the rate at which women present with vaginal symptoms unrelated to BV (e.g., yeast infections, irritation), which affects how often BV is incidentally detected and treated through symptom-driven care-seeking.',
 };
 
 // ---------------------------------------------------------------------------
