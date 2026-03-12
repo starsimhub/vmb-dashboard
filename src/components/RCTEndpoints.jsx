@@ -11,8 +11,23 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import rctEndpoints from '../data/rct_endpoints.json';
+import populationScenarios from '../data/population_scenarios.json';
 import { efficacyColor } from '../utils/dataTransforms.js';
 import { efficacyDescriptions, durationDescriptions } from '../utils/paramDescriptions.js';
+
+// ---------------------------------------------------------------------------
+// Population impact lookup: keyed by "dur-eff"
+// ---------------------------------------------------------------------------
+
+const popLookup = {};
+for (const s of populationScenarios) {
+  if (!s.is_baseline) {
+    popLookup[`${s.duration_months}-${s.efficacy_pct}`] = {
+      hivPct: s.hiv_pct_median,
+      ptbPct: s.ptb_pct_median,
+    };
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Build chart data: header rows + data rows grouped by duration (18 → 12 → 6)
@@ -27,6 +42,7 @@ for (const dur of durations) {
     .filter((d) => d.duration_months === dur)
     .sort((a, b) => a.efficacy_pct - b.efficacy_pct);
   for (const d of rows) {
+    const pop = popLookup[`${d.duration_months}-${d.efficacy_pct}`] || {};
     chartData.push({
       name:       `${dur}m / ${d.efficacy_pct}%`,
       label:      `${d.efficacy_pct}% efficacy`,
@@ -39,16 +55,19 @@ for (const dur of durations) {
       cst1:       d.cst1_6m_median,
       cst1_p5:    d.cst1_6m_p5,
       cst1_p95:   d.cst1_6m_p95,
+      hivPct:     pop.hivPct,
+      ptbPct:     pop.ptbPct,
     });
   }
 }
 
 // ---------------------------------------------------------------------------
-// Custom YAxis tick: bold blue for duration headers, gray for efficacy rows
-// Both types show a hover description popup
+// Custom YAxis tick
+// Shows: duration headers (bold blue) + efficacy rows (gray) with hover desc
+// Shows: small colored dot on efficacy rows indicating HIV impact threshold
 // ---------------------------------------------------------------------------
 
-function CustomYAxisTick({ x, y, payload, setLabelTooltip }) {
+function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
   const entry = chartData.find((d) => d.name === payload.value);
   if (!entry) return null;
 
@@ -72,10 +91,15 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip }) {
     );
   }
 
-  const desc = efficacyDescriptions[entry.efficacy];
+  const desc      = efficacyDescriptions[entry.efficacy];
+  const meetsHIV  = entry.hivPct != null && entry.hivPct >= hivThreshold;
+  const dotColor  = meetsHIV ? '#16a34a' : '#d1d5db'; // green if meets, light gray if not
+
   return (
     <g {...handlers(desc, entry.label)}>
-      <text x={x} y={y} dy={4} textAnchor="end"
+      {/* pass/fail dot for HIV threshold */}
+      <circle cx={x + 8} cy={y + 1} r={4} fill={dotColor} />
+      <text x={x - 2} y={y} dy={4} textAnchor="end"
         fontSize={11} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
         {entry.label}
       </text>
@@ -124,14 +148,15 @@ function DiamondLabel(props) {
 }
 
 // ---------------------------------------------------------------------------
-// Custom bar tooltip
+// Custom bar tooltip — includes HIV % averted
 // ---------------------------------------------------------------------------
 
-function CustomTooltip({ active, payload, tppThreshold }) {
+function CustomTooltip({ active, payload, tppThreshold, hivThreshold }) {
   if (!active || !payload || payload.length === 0) return null;
   const d = payload[0]?.payload;
   if (!d || d.isHeader) return null;
   const meetsTPP = d.nugent >= tppThreshold;
+  const meetsHIV = d.hivPct != null && d.hivPct >= hivThreshold;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm font-sans">
       <p className="font-semibold text-gray-700 mb-2">{d.name}</p>
@@ -145,31 +170,49 @@ function CustomTooltip({ active, payload, tppThreshold }) {
         <span className="font-semibold">{d.cst1?.toFixed(1)}%</span>
         <span className="text-gray-400"> (95% UI: {d.cst1_p5?.toFixed(1)}–{d.cst1_p95?.toFixed(1)}%)</span>
       </p>
-      <p className="text-xs mt-1" style={{ color: meetsTPP ? '#16a34a' : '#dc2626' }}>
-        {meetsTPP ? `✓ Meets TPP (≥${tppThreshold}%)` : `✗ Below TPP (<${tppThreshold}%)`}
-      </p>
+      <div className="border-t border-gray-100 mt-2 pt-2 space-y-0.5">
+        <p className="text-xs" style={{ color: meetsTPP ? '#16a34a' : '#dc2626' }}>
+          {meetsTPP ? `✓ Meets durable cure TPP (≥${tppThreshold}%)` : `✗ Below durable cure TPP (<${tppThreshold}%)`}
+        </p>
+        <p className="text-xs" style={{ color: meetsHIV ? '#16a34a' : '#9ca3af' }}>
+          {meetsHIV
+            ? `✓ Meets HIV impact target (${d.hivPct?.toFixed(1)}% ≥ ${hivThreshold}% averted)`
+            : `✗ Below HIV impact target (${d.hivPct?.toFixed(1)}% < ${hivThreshold}% averted)`}
+        </p>
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Static legend
+// Legend
 // ---------------------------------------------------------------------------
 
-function CustomLegend() {
+function CustomLegend({ hivThreshold }) {
   return (
-    <div className="flex flex-wrap items-center gap-4 text-xs font-sans mt-2">
+    <div className="flex flex-wrap items-center gap-5 text-xs font-sans mt-3">
       <div className="flex items-center gap-1.5">
         <div className="h-3 flex items-center">
           <div className="w-6 border-t-2 border-dashed border-gray-400" />
         </div>
-        <span className="text-gray-600">TPP threshold</span>
+        <span className="text-gray-600">Durable cure TPP threshold</span>
       </div>
       <div className="flex items-center gap-1.5">
         <svg width="14" height="14" viewBox="0 0 14 14" className="flex-shrink-0">
           <polygon points="7,0 14,7 7,14 0,7" fill="#374151" opacity="0.85" />
         </svg>
         <span className="text-gray-600">CST I prevalence at 6 months</span>
+      </div>
+      <div className="flex items-center gap-3 ml-auto border-l border-gray-100 pl-5">
+        <span className="text-gray-400 uppercase tracking-wide font-semibold">HIV impact:</span>
+        <div className="flex items-center gap-1.5">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#16a34a" /></svg>
+          <span className="text-gray-600">≥ {hivThreshold}% HIV infections averted</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#d1d5db" /></svg>
+          <span className="text-gray-600">Below target</span>
+        </div>
       </div>
     </div>
   );
@@ -181,6 +224,7 @@ function CustomLegend() {
 
 export default function RCTEndpoints() {
   const [tppThreshold, setTppThreshold] = useState(70);
+  const [hivThreshold, setHivThreshold] = useState(5);
   const [labelTooltip, setLabelTooltip] = useState(null);
 
   return (
@@ -200,31 +244,55 @@ export default function RCTEndpoints() {
           </p>
         </div>
 
-        {/* TPP slider control */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        {/* Controls */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 space-y-4">
+          {/* TPP threshold */}
           <div className="flex flex-wrap items-center gap-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
-                Target product profile threshold
+                Durable cure threshold (TPP)
               </p>
               <p className="text-xs text-gray-400 font-sans">
-                Drag to set the minimum durable cure rate required for regulatory or payer acceptance.
+                Minimum durable cure rate required for regulatory or payer acceptance.
               </p>
             </div>
             <div className="flex items-center gap-4 ml-auto">
               <span className="text-sm text-gray-500 font-sans w-8 text-right">0%</span>
               <input
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={tppThreshold}
+                type="range" min={0} max={100} step={1} value={tppThreshold}
                 onChange={(e) => setTppThreshold(Number(e.target.value))}
                 className="w-48 accent-brand-teal cursor-pointer"
               />
               <span className="text-sm text-gray-500 font-sans w-10">100%</span>
               <div className="bg-brand-teal text-white rounded-lg px-4 py-1.5 min-w-[64px] text-center">
                 <span className="font-serif font-bold text-lg">{tppThreshold}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-100" />
+
+          {/* HIV impact threshold */}
+          <div className="flex flex-wrap items-center gap-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+                Population HIV impact target
+              </p>
+              <p className="text-xs text-gray-400 font-sans">
+                Minimum % of HIV infections averted (2035–2050) for a scenario to meet the population impact target.
+              </p>
+            </div>
+            <div className="flex items-center gap-4 ml-auto">
+              <span className="text-sm text-gray-500 font-sans w-8 text-right">0%</span>
+              <input
+                type="range" min={0} max={10} step={0.5} value={hivThreshold}
+                onChange={(e) => setHivThreshold(Number(e.target.value))}
+                className="w-48 accent-brand-teal cursor-pointer"
+              />
+              <span className="text-sm text-gray-500 font-sans w-10">10%</span>
+              <div className="bg-brand-teal text-white rounded-lg px-4 py-1.5 min-w-[64px] text-center">
+                <span className="font-serif font-bold text-lg">{hivThreshold}%</span>
               </div>
             </div>
           </div>
@@ -235,13 +303,13 @@ export default function RCTEndpoints() {
             Durable cure at 6 months by Nugent score 0–3 (bars) and CST I prevalence (◆)
           </p>
           <p className="text-xs text-gray-400 font-sans mb-4">
-            By product efficacy and duration; grouped by duration
+            By product efficacy and duration; grouped by duration. Dot color indicates whether scenario meets the HIV impact target.
           </p>
           <ResponsiveContainer width="100%" height={480}>
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ top: 24, right: 60, left: 120, bottom: 32 }}
+              margin={{ top: 24, right: 60, left: 130, bottom: 32 }}
               barCategoryGap="20%"
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
@@ -264,12 +332,12 @@ export default function RCTEndpoints() {
               <YAxis
                 type="category"
                 dataKey="name"
-                tick={<CustomYAxisTick setLabelTooltip={setLabelTooltip} />}
+                tick={<CustomYAxisTick setLabelTooltip={setLabelTooltip} hivThreshold={hivThreshold} />}
                 axisLine={false}
                 tickLine={false}
-                width={115}
+                width={125}
               />
-              <Tooltip content={<CustomTooltip tppThreshold={tppThreshold} />} />
+              <Tooltip content={<CustomTooltip tppThreshold={tppThreshold} hivThreshold={hivThreshold} />} />
 
               <ReferenceLine
                 x={tppThreshold}
@@ -297,7 +365,7 @@ export default function RCTEndpoints() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <CustomLegend />
+          <CustomLegend hivThreshold={hivThreshold} />
         </div>
       </div>
       <LabelTooltip tooltip={labelTooltip} />
