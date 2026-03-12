@@ -252,11 +252,7 @@ const ACCORDION_SECTIONS = [
         <div>
           <h4 className="font-semibold text-gray-800 mb-1.5">Pregnancy and PTB</h4>
           <p className="mb-3">
-            Agents become pregnant at an empirically calibrated monthly rate. Gestational age at
-            birth is drawn from a mixed-effects model conditioned on CST state during pregnancy.
-            BV / CST IV during the second trimester carries a 1.6-fold elevated PTB risk (OR from
-            meta-analysis). Intervention products reduce PTB risk by shifting CST state prior to or
-            during early pregnancy.
+            Agents become pregnant at an empirically calibrated monthly rate.
           </p>
           <p className="mb-3">
             PTB risk is modeled through cumulative inflammation accumulation across the three
