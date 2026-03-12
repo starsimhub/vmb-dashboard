@@ -440,16 +440,16 @@ export default function ScenarioExplorer() {
                   width={36}
                 />
                 <Tooltip content={<CustomTooltip showPct={showPct} />} />
-                <Bar dataKey={`${hivKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} />
-                <Bar dataKey={`${hivKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} />
                 <Bar dataKey={`${hivKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} />
+                <Bar dataKey={`${hivKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} />
+                <Bar dataKey={`${hivKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} />
               </BarChart>
             </ResponsiveContainer>
             <EfficacyLegend
               payload={[
-                { value: '50% efficacy', color: efficacyColor(50) },
-                { value: '65% efficacy', color: efficacyColor(65) },
                 { value: '80% efficacy', color: efficacyColor(80) },
+                { value: '65% efficacy', color: efficacyColor(65) },
+                { value: '50% efficacy', color: efficacyColor(50) },
               ]}
               setLabelTooltip={setLabelTooltip}
             />
@@ -494,16 +494,16 @@ export default function ScenarioExplorer() {
                   width={36}
                 />
                 <Tooltip content={<CustomTooltip showPct={showPct} />} />
-                <Bar dataKey={`${ptbKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} />
-                <Bar dataKey={`${ptbKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} />
                 <Bar dataKey={`${ptbKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} />
+                <Bar dataKey={`${ptbKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} />
+                <Bar dataKey={`${ptbKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} />
               </BarChart>
             </ResponsiveContainer>
             <EfficacyLegend
               payload={[
-                { value: '50% efficacy', color: efficacyColor(50) },
-                { value: '65% efficacy', color: efficacyColor(65) },
                 { value: '80% efficacy', color: efficacyColor(80) },
+                { value: '65% efficacy', color: efficacyColor(65) },
+                { value: '50% efficacy', color: efficacyColor(50) },
               ]}
               setLabelTooltip={setLabelTooltip}
             />

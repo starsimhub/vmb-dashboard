@@ -40,7 +40,7 @@ for (const dur of durations) {
   chartData.push({ name: `${dur}m`, isHeader: true, nugent: null, cst1: null });
   const rows = rctEndpoints
     .filter((d) => d.duration_months === dur)
-    .sort((a, b) => a.efficacy_pct - b.efficacy_pct);
+    .sort((a, b) => b.efficacy_pct - a.efficacy_pct);
   for (const d of rows) {
     const pop = popLookup[`${d.duration_months}-${d.efficacy_pct}`] || {};
     chartData.push({
