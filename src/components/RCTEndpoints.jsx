@@ -191,6 +191,17 @@ function CustomTooltip({ active, payload, tppThreshold, hivThreshold }) {
 function CustomLegend({ hivThreshold }) {
   return (
     <div className="flex flex-wrap items-center gap-5 text-xs font-sans mt-3">
+      <div className="flex items-center gap-3 border-r border-gray-100 pr-5">
+        <span className="text-gray-400 uppercase tracking-wide font-semibold">HIV impact:</span>
+        <div className="flex items-center gap-1.5">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#16a34a" /></svg>
+          <span className="text-gray-600">≥ {hivThreshold}% HIV infections averted</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#d1d5db" /></svg>
+          <span className="text-gray-600">Below target</span>
+        </div>
+      </div>
       <div className="flex items-center gap-1.5">
         <div className="h-3 flex items-center">
           <div className="w-6 border-t-2 border-dashed border-gray-400" />
@@ -202,17 +213,6 @@ function CustomLegend({ hivThreshold }) {
           <polygon points="7,0 14,7 7,14 0,7" fill="#374151" opacity="0.85" />
         </svg>
         <span className="text-gray-600">CST I prevalence at 6 months</span>
-      </div>
-      <div className="flex items-center gap-3 ml-auto border-l border-gray-100 pl-5">
-        <span className="text-gray-400 uppercase tracking-wide font-semibold">HIV impact:</span>
-        <div className="flex items-center gap-1.5">
-          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#16a34a" /></svg>
-          <span className="text-gray-600">≥ {hivThreshold}% HIV infections averted</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#d1d5db" /></svg>
-          <span className="text-gray-600">Below target</span>
-        </div>
       </div>
     </div>
   );
