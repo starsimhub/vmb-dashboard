@@ -87,7 +87,7 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
           fontSize={11} fontFamily="IBM Plex Serif, serif" fontWeight={700} fill="#1e3a5f">
           {entry.name}
         </text>
-        <text x={x + 8} y={y} dy={4} textAnchor="start"
+        <text x={x + 12} y={y} dy={4} textAnchor="start"
           fontSize={9} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
           ⓘ
         </text>
@@ -107,7 +107,7 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
         fontSize={11} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
         {entry.label}
       </text>
-      <text x={x - 2} y={y} dy={4} textAnchor="end"
+      <text x={x - 14} y={y} dy={4} textAnchor="start"
         fontSize={9} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
         ⓘ
       </text>
