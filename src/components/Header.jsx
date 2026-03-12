@@ -34,7 +34,7 @@ export default function Header() {
           <div className="flex items-center gap-3">
             {/* Logo mark */}
             <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center">
-              <img src="/IDMicon.png" alt="VMB Logo"/>
+              <img src="/starsim-icon.png" alt="VMB Logo"/>
             </div>
             <div>
               <span className="font-serif font-semibold text-brand-blue text-base leading-tight hidden sm:block">
