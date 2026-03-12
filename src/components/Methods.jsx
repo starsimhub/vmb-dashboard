@@ -352,7 +352,7 @@ function AccordionSection({ section, isOpen, onToggle }) {
 
       <div
         style={{
-          maxHeight: isOpen ? '1000px' : '0',
+          maxHeight: isOpen ? '4000px' : '0',
           overflow: 'hidden',
           transition: 'max-height 0.3s ease-in-out',
         }}
