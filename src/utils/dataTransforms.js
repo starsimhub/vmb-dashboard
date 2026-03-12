@@ -29,9 +29,9 @@ export function formatNumber(n, decimals = 1) {
  * @returns {string} hex color string
  */
 export function efficacyColor(pct) {
-  if (pct === 50) return '#ef4444';
-  if (pct === 65) return '#f97316';
-  if (pct === 80) return '#22c55e';
+  if (pct === 50) return '#93c5fd';  // blue-300 — low efficacy
+  if (pct === 65) return '#3b82f6';  // blue-500 — medium efficacy
+  if (pct === 80) return '#1d4ed8';  // blue-700 — high efficacy
   return '#6b7280';
 }
 
