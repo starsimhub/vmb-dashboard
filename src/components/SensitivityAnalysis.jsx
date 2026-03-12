@@ -31,6 +31,20 @@ function shortenLabel(label) {
 }
 
 // ---------------------------------------------------------------------------
+// Descriptions shown on row label hover
+// ---------------------------------------------------------------------------
+
+const descriptions = {
+  'Low LBP fitness': 'BV recurrence is eliminated in LBP-colonized women (stability = 1.0), representing a best-case scenario for competitive exclusion of BV-associated bacteria.',
+  'Later intro (2040)': 'Product market introduction delayed by 5 years to 2040, reducing the intervention window from 15 to 10 years before the 2050 horizon.',
+  'Asymptomatic prenatal screening': 'Women are screened for BV at prenatal visits regardless of symptoms, adding a care-seeking pathway beyond symptom-driven treatment.',
+  'Asymptomatic prenatal screening + LBP for Nugent 4–6': 'Prenatal screening with treatment extended to women with intermediate flora (Nugent 4–6) in addition to those with full BV (Nugent 7–10).',
+  'LBP effective in MTZ non-responders': 'LBP successfully treats all CST4-positive women, including those who do not respond to standard metronidazole therapy.',
+  '−10% non-BV vaginal symptoms': 'Baseline rate of vaginal symptoms not caused by BV is reduced by 10 percentage points, decreasing care-seeking among women without BV.',
+  '+10% non-BV vaginal symptoms': 'Baseline rate of vaginal symptoms not caused by BV is increased by 10 percentage points, increasing care-seeking among women without BV.',
+};
+
+// ---------------------------------------------------------------------------
 // Prepare data — exclude reference row
 // ---------------------------------------------------------------------------
 
@@ -55,7 +69,82 @@ const ptbBase = sensitivityScenarios
   }));
 
 // ---------------------------------------------------------------------------
-// Custom tooltip
+// Custom Y-axis tick with hover tooltip
+// ---------------------------------------------------------------------------
+
+function CustomYAxisTick({ x, y, payload, setLabelTooltip }) {
+  const label = payload?.value;
+  const hasDesc = Boolean(descriptions[label]);
+  return (
+    <g
+      style={{ cursor: hasDesc ? 'help' : 'default' }}
+      onMouseEnter={(e) => {
+        if (hasDesc) {
+          setLabelTooltip({ label, x: e.clientX, y: e.clientY });
+        }
+      }}
+      onMouseLeave={() => setLabelTooltip(null)}
+      onMouseMove={(e) => {
+        if (hasDesc) {
+          setLabelTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
+        }
+      }}
+    >
+      <text
+        x={x - (hasDesc ? 14 : 4)}
+        y={y}
+        dy={4}
+        textAnchor="end"
+        fontSize={10}
+        fontFamily="IBM Plex Sans, sans-serif"
+        fill={hasDesc ? '#0E7490' : '#6B7280'}
+      >
+        {label}
+      </text>
+      {hasDesc && (
+        <text
+          x={x - 4}
+          y={y}
+          dy={4}
+          textAnchor="end"
+          fontSize={9}
+          fontFamily="IBM Plex Sans, sans-serif"
+          fill="#9CA3AF"
+        >
+          ⓘ
+        </text>
+      )}
+    </g>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Floating label tooltip (portal-style, fixed position)
+// ---------------------------------------------------------------------------
+
+function LabelTooltip({ tooltip }) {
+  if (!tooltip) return null;
+  const OFFSET = 14;
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left: tooltip.x + OFFSET,
+        top: tooltip.y + OFFSET,
+        zIndex: 9999,
+        maxWidth: 280,
+        pointerEvents: 'none',
+      }}
+      className="bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-xs font-sans"
+    >
+      <p className="font-semibold text-gray-700 mb-1">{tooltip.label}</p>
+      <p className="text-gray-500 leading-relaxed">{descriptions[tooltip.label]}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Custom bar tooltip
 // ---------------------------------------------------------------------------
 
 function CustomTooltip({ active, payload, showPct }) {
@@ -95,6 +184,8 @@ function CustomTooltip({ active, payload, showPct }) {
 // ---------------------------------------------------------------------------
 
 function TornadoPanel({ title, data, showPct }) {
+  const [labelTooltip, setLabelTooltip] = useState(null);
+
   const values  = data.map((d) => showPct ? d.pct_change : d.delta);
   const absMax  = Math.max(...values.map(Math.abs)) * 1.15 || 1;
   const step    = showPct ? 5 : 10000;
@@ -142,7 +233,7 @@ function TornadoPanel({ title, data, showPct }) {
           <YAxis
             type="category"
             dataKey="label"
-            tick={{ fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+            tick={<CustomYAxisTick setLabelTooltip={setLabelTooltip} />}
             axisLine={false}
             tickLine={false}
             width={142}
@@ -174,6 +265,7 @@ function TornadoPanel({ title, data, showPct }) {
           <span className="text-gray-500">Less impact than reference</span>
         </div>
       </div>
+      <LabelTooltip tooltip={labelTooltip} />
     </div>
   );
 }
@@ -197,7 +289,7 @@ export default function SensitivityAnalysis() {
           <p className="section-subheading max-w-2xl">
             Change in averted outcomes vs the reference scenario (80% efficacy, 12-month
             duration) for each sensitivity assumption. Positive values indicate more benefit
-            than the reference.
+            than the reference. Hover over a row label for details.
           </p>
         </div>
 
