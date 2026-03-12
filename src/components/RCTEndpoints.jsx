@@ -14,44 +14,90 @@ import rctEndpoints from '../data/rct_endpoints.json';
 import { efficacyColor } from '../utils/dataTransforms.js';
 
 // ---------------------------------------------------------------------------
-// Sort: 18m top → 6m bottom, within each group ascending efficacy
+// Build chart data: header rows + data rows grouped by duration (18 → 12 → 6)
 // ---------------------------------------------------------------------------
 
-const chartData = [...rctEndpoints]
-  .sort(
-    (a, b) =>
-      b.duration_months - a.duration_months || a.efficacy_pct - b.efficacy_pct
-  )
-  .map((d) => ({
-    name: `${d.duration_months}m / ${d.efficacy_pct}%`,
-    duration: d.duration_months,
-    efficacy: d.efficacy_pct,
-    nugent: d.nugent_normal_6m_median,
-    nugent_p5: d.nugent_normal_6m_p5,
-    nugent_p95: d.nugent_normal_6m_p95,
-    cst1: d.cst1_6m_median,
-    cst1_p5: d.cst1_6m_p5,
-    cst1_p95: d.cst1_6m_p95,
-  }));
+const durations = [18, 12, 6];
+
+const chartData = [];
+for (const dur of durations) {
+  chartData.push({ name: `${dur}m`, isHeader: true, nugent: null, cst1: null });
+  const rows = rctEndpoints
+    .filter((d) => d.duration_months === dur)
+    .sort((a, b) => a.efficacy_pct - b.efficacy_pct);
+  for (const d of rows) {
+    chartData.push({
+      name:       `${dur}m / ${d.efficacy_pct}%`,
+      label:      `${d.efficacy_pct}% efficacy`,
+      isHeader:   false,
+      duration:   d.duration_months,
+      efficacy:   d.efficacy_pct,
+      nugent:     d.nugent_normal_6m_median,
+      nugent_p5:  d.nugent_normal_6m_p5,
+      nugent_p95: d.nugent_normal_6m_p95,
+      cst1:       d.cst1_6m_median,
+      cst1_p5:    d.cst1_6m_p5,
+      cst1_p95:   d.cst1_6m_p95,
+    });
+  }
+}
 
 // ---------------------------------------------------------------------------
-// Diamond shape for CST I markers
+// Custom YAxis tick: bold blue for headers, normal gray for data rows
 // ---------------------------------------------------------------------------
 
-function DiamondShape(props) {
-  const { x, y, width, height, value, efficacy } = props;
-  if (value === null || value === undefined) return null;
-  const cx = x + width;
+function CustomYAxisTick({ x, y, payload }) {
+  const entry = chartData.find((d) => d.name === payload.value);
+  if (!entry) return null;
+  if (entry.isHeader) {
+    return (
+      <text
+        x={x}
+        y={y}
+        dy={4}
+        textAnchor="end"
+        fontSize={11}
+        fontFamily="IBM Plex Serif, serif"
+        fontWeight={700}
+        fill="#1e3a5f"
+      >
+        {entry.name}
+      </text>
+    );
+  }
+  return (
+    <text
+      x={x}
+      y={y}
+      dy={4}
+      textAnchor="end"
+      fontSize={11}
+      fontFamily="IBM Plex Sans, sans-serif"
+      fill="#6B7280"
+    >
+      {entry.label}
+    </text>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Diamond label — rendered on top of the nugent bar, proportional x position
+// ---------------------------------------------------------------------------
+
+function DiamondLabel(props) {
+  const { x, y, width, height, value, index } = props;
+  const entry = chartData[index];
+  if (!entry || entry.isHeader || !entry.cst1 || !value) return null;
+  const cx = x + (entry.cst1 / value) * width;
   const cy = y + height / 2;
-  const size = 5;
-  const color = efficacyColor(efficacy);
+  const s = 5;
+  const color = efficacyColor(entry.efficacy);
   return (
     <polygon
-      points={`${cx},${cy - size} ${cx + size},${cy} ${cx},${cy + size} ${cx - size},${cy}`}
+      points={`${cx},${cy - s} ${cx + s},${cy} ${cx},${cy + s} ${cx - s},${cy}`}
       fill={color}
-      stroke={color}
+      stroke="white"
       strokeWidth={1}
-      opacity={0.9}
     />
   );
 }
@@ -60,10 +106,10 @@ function DiamondShape(props) {
 // Custom tooltip
 // ---------------------------------------------------------------------------
 
-function CustomTooltip({ active, payload, label, tppThreshold }) {
+function CustomTooltip({ active, payload, tppThreshold }) {
   if (!active || !payload || payload.length === 0) return null;
   const d = payload[0]?.payload;
-  if (!d) return null;
+  if (!d || d.isHeader) return null;
   const meetsTPP = d.nugent >= tppThreshold;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm font-sans">
@@ -166,15 +212,14 @@ export default function RCTEndpoints() {
             Durable cure at 6 months by Nugent score 0–3 (bars) and CST I prevalence (◆)
           </p>
           <p className="text-xs text-gray-400 font-sans mb-4">
-            By product efficacy and duration; each row is one scenario
+            By product efficacy and duration; grouped by duration
           </p>
-          <ResponsiveContainer width="100%" height={420}>
+          <ResponsiveContainer width="100%" height={480}>
             <BarChart
               data={chartData}
               layout="vertical"
               margin={{ top: 24, right: 60, left: 120, bottom: 32 }}
               barCategoryGap="20%"
-              barGap={1}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
               <XAxis
@@ -196,7 +241,7 @@ export default function RCTEndpoints() {
               <YAxis
                 type="category"
                 dataKey="name"
-                tick={{ fontSize: 11, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+                tick={<CustomYAxisTick />}
                 axisLine={false}
                 tickLine={false}
                 width={115}
@@ -219,25 +264,16 @@ export default function RCTEndpoints() {
                 }}
               />
 
-              {/* Nugent 0-3 bars, colored by efficacy */}
-              <Bar dataKey="nugent" name="Nugent 0–3 at 6m" barSize={16} opacity={0.85}>
+              {/* Nugent 0-3 bars, colored by efficacy, with diamond labels for CST I */}
+              <Bar dataKey="nugent" name="Nugent 0–3 at 6m" barSize={16} opacity={0.85}
+                label={<DiamondLabel />}>
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={efficacyColor(entry.efficacy)} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.isHeader ? 'transparent' : efficacyColor(entry.efficacy)}
+                  />
                 ))}
               </Bar>
-
-              {/* CST I diamonds as a bar with custom shape */}
-              <Bar
-                dataKey="cst1"
-                name="CST I at 6m"
-                barSize={16}
-                fill="none"
-                shape={(props) => {
-                  const entry = chartData[props.index];
-                  const eff = entry ? entry.efficacy : 80;
-                  return <DiamondShape {...props} efficacy={eff} />;
-                }}
-              />
             </BarChart>
           </ResponsiveContainer>
           <CustomLegend />
