@@ -25,7 +25,7 @@ const FINDINGS = [
     headline: 'Duration drives HIV impact',
     summary:
       'Products with 18-month duration of protection avert ~341% more HIV infections than 6-month products at the same 80% efficacy (248,756 vs 56,434 infections averted, 2035–2050). Products with shorter durations disproportionately limit network-level transmission reduction.',
-    stat: '4× more HIV',
+    stat: '4× more HIV averted',
     statLabel: '18m vs 6m at 80% efficacy',
     color: 'blue',
   },
