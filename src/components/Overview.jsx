@@ -22,10 +22,6 @@ export default function Overview() {
               Preprint
             </a>
             &nbsp;·&nbsp;
-            <a href="[APPENDIX_URL]" className="text-brand-teal hover:underline">
-              Supplementary appendix
-            </a>
-            &nbsp;·&nbsp;
             <a href="https://github.com/starsimhub/vmb_gr_2026q1" className="text-brand-teal hover:underline">
               Code
             </a>
