@@ -357,10 +357,16 @@ function AccordionSection({ section, isOpen, onToggle }) {
 }
 
 export default function Methods() {
-  const [openSection, setOpenSection] = useState(null);
+  const [openSections, setOpenSections] = useState(
+    () => new Set(ACCORDION_SECTIONS.map((s) => s.id))
+  );
 
   const toggle = (id) => {
-    setOpenSection((prev) => (prev === id ? null : id));
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
   return (
@@ -373,8 +379,7 @@ export default function Methods() {
           <h2 className="section-heading">Model and methods</h2>
           <p className="section-subheading max-w-2xl">
             Technical details on the simulation framework, model structure, calibration data
-            sources, DALY attribution, and health system costing assumptions. Click each section
-            to expand.
+            sources, DALY attribution, and health system costing assumptions.
           </p>
         </div>
 
@@ -384,7 +389,7 @@ export default function Methods() {
               <AccordionSection
                 key={section.id}
                 section={section}
-                isOpen={openSection === section.id}
+                isOpen={openSections.has(section.id)}
                 onToggle={() => toggle(section.id)}
               />
             ))}
