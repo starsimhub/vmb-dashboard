@@ -33,17 +33,8 @@ export default function Header() {
           {/* Left: title */}
           <div className="flex items-center gap-3">
             {/* Logo mark */}
-            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-teal flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-white"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+            <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center">
+              <img src="/IDMicon.png" alt="VMB Logo"/>
             </div>
             <div>
               <span className="font-serif font-semibold text-brand-blue text-base leading-tight hidden sm:block">

@@ -57,7 +57,7 @@ function DurationTick({ x, y, payload, setLabelTooltip }) {
         fontSize={12} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
         {payload.value}
       </text>
-      <text x={x - 10} y={y} dy={4} textAnchor="start"
+      <text x={x - 8} y={y} dy={4} textAnchor="start"
         fontSize={9} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
         ⓘ
       </text>

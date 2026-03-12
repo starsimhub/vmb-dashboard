@@ -103,7 +103,7 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip }) {
       </text>
       {hasDesc && (
         <text
-          x={x - 14}
+          x={x - 10}
           y={y}
           dy={4}
           textAnchor="start"
