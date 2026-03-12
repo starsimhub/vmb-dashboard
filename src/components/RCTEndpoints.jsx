@@ -97,8 +97,8 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
 
   return (
     <g {...handlers(desc, entry.label)}>
-      {/* pass/fail dot for HIV threshold */}
-      <circle cx={x + 8} cy={y + 1} r={4} fill={dotColor} />
+      {/* pass/fail dot — sits just left of the label text */}
+      <circle cx={x - 80} cy={y + 1} r={4} fill={dotColor} />
       <text x={x - 2} y={y} dy={4} textAnchor="end"
         fontSize={11} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
         {entry.label}
