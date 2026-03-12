@@ -6,11 +6,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import populationScenarios from '../data/population_scenarios.json';
 import { formatNumber, efficacyColor, filterPopulationScenarios } from '../utils/dataTransforms.js';
+import { efficacyDescriptions, durationDescriptions } from '../utils/paramDescriptions.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -22,29 +22,94 @@ function fmtComma(n) {
 }
 
 // ---------------------------------------------------------------------------
-// Custom tooltip
+// Floating label tooltip (fixed position)
+// ---------------------------------------------------------------------------
+
+function LabelTooltip({ tooltip }) {
+  if (!tooltip) return null;
+  return (
+    <div
+      style={{ position: 'fixed', left: tooltip.x + 14, top: tooltip.y + 14,
+        zIndex: 9999, maxWidth: 280, pointerEvents: 'none' }}
+      className="bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-xs font-sans"
+    >
+      <p className="font-semibold text-gray-700 mb-1">{tooltip.label}</p>
+      <p className="text-gray-500 leading-relaxed">{tooltip.desc}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Custom YAxis tick for duration labels (e.g. "6m", "12m", "18m")
+// ---------------------------------------------------------------------------
+
+function DurationTick({ x, y, payload, setLabelTooltip }) {
+  const dur  = parseInt(payload?.value);
+  const desc = durationDescriptions[dur];
+  return (
+    <g
+      style={{ cursor: 'help' }}
+      onMouseEnter={(e) => setLabelTooltip({ label: payload.value, desc, x: e.clientX, y: e.clientY })}
+      onMouseLeave={() => setLabelTooltip(null)}
+      onMouseMove={(e) => setLabelTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
+    >
+      <text x={x} y={y} dy={4} textAnchor="end"
+        fontSize={12} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
+        {payload.value}
+      </text>
+    </g>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Custom legend with hover descriptions for efficacy
+// ---------------------------------------------------------------------------
+
+function EfficacyLegend({ payload, setLabelTooltip }) {
+  if (!payload || payload.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-4 pb-2 text-xs font-sans">
+      {payload.map((entry) => {
+        const effMatch = entry.value.match(/^(\d+)%/);
+        const effNum   = effMatch ? parseInt(effMatch[1]) : null;
+        const desc     = effNum ? efficacyDescriptions[effNum] : null;
+        return (
+          <div
+            key={entry.value}
+            className="flex items-center gap-1.5"
+            style={{ cursor: desc ? 'help' : 'default' }}
+            onMouseEnter={(e) => desc && setLabelTooltip({ label: entry.value, desc, x: e.clientX, y: e.clientY })}
+            onMouseLeave={() => setLabelTooltip(null)}
+            onMouseMove={(e) => setLabelTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
+          >
+            <div style={{ width: 12, height: 12, backgroundColor: entry.color, borderRadius: 2 }} />
+            <span style={{ color: '#374151' }}>{entry.value}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Custom bar tooltip
 // ---------------------------------------------------------------------------
 
 function CustomTooltip({ active, payload, label, showPct }) {
   if (!active || !payload || payload.length === 0) return null;
-  const fmt = showPct
-    ? (v) => (v === null || v === undefined ? '—' : v.toFixed(1) + '%')
-    : fmtComma;
-  const fmtUI = showPct
-    ? (v) => (v === null || v === undefined ? '—' : v.toFixed(1) + '%')
-    : fmtComma;
+  const fmt   = showPct ? (v) => (v === null || v === undefined ? '—' : v.toFixed(1) + '%') : fmtComma;
+  const fmtUI = showPct ? (v) => (v === null || v === undefined ? '—' : v.toFixed(1) + '%') : fmtComma;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm font-sans">
       <p className="font-semibold text-gray-700 mb-2">{label}</p>
       {payload.map((entry) => {
         if (entry.value === null || entry.value === undefined) return null;
-        const d = entry.payload;
-        // dataKey looks like "hiv_80" or "hivpct_80" — extract the eff suffix
+        const d      = entry.payload;
         const parts  = entry.dataKey.split('_');
         const eff    = parts[parts.length - 1];
         const prefix = parts.slice(0, -1).join('_');
-        const lo  = d[`${prefix}_${eff}_p5`];
-        const hi  = d[`${prefix}_${eff}_p95`];
+        const lo     = d[`${prefix}_${eff}_p5`];
+        const hi     = d[`${prefix}_${eff}_p95`];
         return (
           <p key={entry.dataKey} style={{ color: entry.fill }} className="text-xs">
             {entry.name}: {fmt(entry.value)}
@@ -122,7 +187,7 @@ function BaselineCard({ baselineHiv, baselinePtb }) {
 function MultiToggle({ label, options, selected, onChange, colorFn }) {
   function toggle(val) {
     if (selected.includes(val)) {
-      if (selected.length === 1) return; // keep at least one selected
+      if (selected.length === 1) return;
       onChange(selected.filter((v) => v !== val));
     } else {
       onChange([...selected, val]);
@@ -133,7 +198,7 @@ function MultiToggle({ label, options, selected, onChange, colorFn }) {
       <span className="text-sm font-medium text-gray-600 font-sans mr-1">{label}</span>
       {options.map((opt) => {
         const active = selected.includes(opt.value);
-        const color = colorFn ? colorFn(opt.value) : '#0E7490';
+        const color  = colorFn ? colorFn(opt.value) : '#0E7490';
         return (
           <button
             key={opt.value}
@@ -161,8 +226,9 @@ export default function ScenarioExplorer() {
   const [selectedEfficacy, setSelectedEfficacy] = useState([50, 65, 80]);
   const [selectedDuration, setSelectedDuration] = useState([6, 12, 18]);
   const [showPct, setShowPct] = useState(false);
+  const [labelTooltip, setLabelTooltip] = useState(null);
 
-  const baseline = populationScenarios.find((s) => s.is_baseline);
+  const baseline    = populationScenarios.find((s) => s.is_baseline);
   const baselineHiv = baseline?.baseline_hiv_median;
   const baselinePtb = baseline?.baseline_ptb_median;
 
@@ -174,16 +240,13 @@ export default function ScenarioExplorer() {
   );
 
   const filteredScenarios = useMemo(
-    () =>
-      filterPopulationScenarios(populationScenarios, {
-        efficacy: selectedEfficacy,
-        duration: selectedDuration,
-      }),
+    () => filterPopulationScenarios(populationScenarios, {
+      efficacy: selectedEfficacy,
+      duration: selectedDuration,
+    }),
     [selectedEfficacy, selectedDuration]
   );
 
-  // Build grouped chart data: one row per duration, columns per efficacy
-  // Stores both absolute and percent fields so toggling doesn't need a rebuild
   const chartData = useMemo(() => {
     return [6, 12, 18].map((dur) => {
       const row = { duration: `${dur}m` };
@@ -192,15 +255,15 @@ export default function ScenarioExplorer() {
           (x) => !x.is_baseline && x.efficacy_pct === eff && x.duration_months === dur
         );
         if (s) {
-          row[`hiv_${eff}`]     = s.hiv_averted_median;
-          row[`hiv_${eff}_p5`]  = s.hiv_averted_p5;
-          row[`hiv_${eff}_p95`] = s.hiv_averted_p95;
+          row[`hiv_${eff}`]        = s.hiv_averted_median;
+          row[`hiv_${eff}_p5`]     = s.hiv_averted_p5;
+          row[`hiv_${eff}_p95`]    = s.hiv_averted_p95;
           row[`hivpct_${eff}`]     = s.hiv_pct_median;
           row[`hivpct_${eff}_p5`]  = s.hiv_pct_p5;
           row[`hivpct_${eff}_p95`] = s.hiv_pct_p95;
-          row[`ptb_${eff}`]     = s.ptb_averted_median;
-          row[`ptb_${eff}_p5`]  = s.ptb_averted_p5;
-          row[`ptb_${eff}_p95`] = s.ptb_averted_p95;
+          row[`ptb_${eff}`]        = s.ptb_averted_median;
+          row[`ptb_${eff}_p5`]     = s.ptb_averted_p5;
+          row[`ptb_${eff}_p95`]    = s.ptb_averted_p95;
           row[`ptbpct_${eff}`]     = s.ptb_pct_median;
           row[`ptbpct_${eff}_p5`]  = s.ptb_pct_p5;
           row[`ptbpct_${eff}_p95`] = s.ptb_pct_p95;
@@ -210,22 +273,19 @@ export default function ScenarioExplorer() {
     });
   }, []);
 
-  // Apply filter: set unselected bars to null so they don't render
   const filteredChartData = useMemo(() => {
     return chartData.map((row) => {
-      const newRow = { duration: row.duration };
-      const durNum = parseInt(row.duration, 10);
+      const newRow  = { duration: row.duration };
+      const durNum  = parseInt(row.duration, 10);
       const durActive = selectedDuration.includes(durNum);
       for (const eff of [50, 65, 80]) {
         const effActive = selectedEfficacy.includes(eff) && durActive;
-        // absolute
-        newRow[`hiv_${eff}`]     = effActive ? row[`hiv_${eff}`] : null;
-        newRow[`hiv_${eff}_p5`]  = row[`hiv_${eff}_p5`];
-        newRow[`hiv_${eff}_p95`] = row[`hiv_${eff}_p95`];
-        newRow[`ptb_${eff}`]     = effActive ? row[`ptb_${eff}`] : null;
-        newRow[`ptb_${eff}_p5`]  = row[`ptb_${eff}_p5`];
-        newRow[`ptb_${eff}_p95`] = row[`ptb_${eff}_p95`];
-        // percent
+        newRow[`hiv_${eff}`]        = effActive ? row[`hiv_${eff}`] : null;
+        newRow[`hiv_${eff}_p5`]     = row[`hiv_${eff}_p5`];
+        newRow[`hiv_${eff}_p95`]    = row[`hiv_${eff}_p95`];
+        newRow[`ptb_${eff}`]        = effActive ? row[`ptb_${eff}`] : null;
+        newRow[`ptb_${eff}_p5`]     = row[`ptb_${eff}_p5`];
+        newRow[`ptb_${eff}_p95`]    = row[`ptb_${eff}_p95`];
         newRow[`hivpct_${eff}`]     = effActive ? row[`hivpct_${eff}`] : null;
         newRow[`hivpct_${eff}_p5`]  = row[`hivpct_${eff}_p5`];
         newRow[`hivpct_${eff}_p95`] = row[`hivpct_${eff}_p95`];
@@ -237,11 +297,18 @@ export default function ScenarioExplorer() {
     });
   }, [chartData, selectedEfficacy, selectedDuration]);
 
-  // Key prefix changes with mode so tooltip logic resolves correctly
   const hivKey  = showPct ? 'hivpct' : 'hiv';
   const ptbKey  = showPct ? 'ptbpct' : 'ptb';
   const xMaxHiv = showPct ? 15 : 310000;
   const xMaxPtb = showPct ? 15 : 310000;
+
+  // Shared legend content for both charts
+  const legendContent = ({ payload }) => (
+    <EfficacyLegend payload={payload} setLabelTooltip={setLabelTooltip} />
+  );
+
+  // Shared duration tick for both charts
+  const durationTick = <DurationTick setLabelTooltip={setLabelTooltip} />;
 
   return (
     <section id="explorer" className="py-16 bg-brand-grayLight">
@@ -254,7 +321,8 @@ export default function ScenarioExplorer() {
           <h2 className="section-heading">Scenario explorer</h2>
           <p className="section-subheading max-w-2xl">
             Explore projected population-level outcomes for LBP interventions across efficacy levels
-            and protection durations, 2035–2050.
+            and protection durations, 2035–2050. Hover over axis labels and legend items for
+            parameter definitions.
           </p>
         </div>
 
@@ -274,7 +342,7 @@ export default function ScenarioExplorer() {
           <MultiToggle
             label="Duration:"
             options={[
-              { value: 6, label: '6m' },
+              { value: 6,  label: '6m' },
               { value: 12, label: '12m' },
               { value: 18, label: '18m' },
             ]}
@@ -282,7 +350,6 @@ export default function ScenarioExplorer() {
             onChange={setSelectedDuration}
             colorFn={() => '#0E7490'}
           />
-          {/* Absolute / % toggle */}
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-sm font-medium text-gray-600 font-sans">Show:</span>
             <div className="flex rounded-full border border-gray-200 overflow-hidden text-sm font-sans">
@@ -362,26 +429,25 @@ export default function ScenarioExplorer() {
                 <YAxis
                   type="category"
                   dataKey="duration"
-                  tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+                  tick={durationTick}
                   axisLine={false}
                   tickLine={false}
                   width={36}
                 />
                 <Tooltip content={<CustomTooltip showPct={showPct} />} />
-                <Legend
-                  verticalAlign="top"
-                  height={28}
-                  formatter={(value) => (
-                    <span style={{ fontSize: 12, fontFamily: 'IBM Plex Sans', color: '#374151' }}>
-                      {value}
-                    </span>
-                  )}
-                />
                 <Bar dataKey={`${hivKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} />
                 <Bar dataKey={`${hivKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} />
                 <Bar dataKey={`${hivKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} />
               </BarChart>
             </ResponsiveContainer>
+            <EfficacyLegend
+              payload={[
+                { value: '50% efficacy', color: efficacyColor(50) },
+                { value: '65% efficacy', color: efficacyColor(65) },
+                { value: '80% efficacy', color: efficacyColor(80) },
+              ]}
+              setLabelTooltip={setLabelTooltip}
+            />
           </div>
 
           {/* PTB chart */}
@@ -417,29 +483,29 @@ export default function ScenarioExplorer() {
                 <YAxis
                   type="category"
                   dataKey="duration"
-                  tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+                  tick={durationTick}
                   axisLine={false}
                   tickLine={false}
                   width={36}
                 />
                 <Tooltip content={<CustomTooltip showPct={showPct} />} />
-                <Legend
-                  verticalAlign="top"
-                  height={28}
-                  formatter={(value) => (
-                    <span style={{ fontSize: 12, fontFamily: 'IBM Plex Sans', color: '#374151' }}>
-                      {value}
-                    </span>
-                  )}
-                />
                 <Bar dataKey={`${ptbKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} />
                 <Bar dataKey={`${ptbKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} />
                 <Bar dataKey={`${ptbKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} />
               </BarChart>
             </ResponsiveContainer>
+            <EfficacyLegend
+              payload={[
+                { value: '50% efficacy', color: efficacyColor(50) },
+                { value: '65% efficacy', color: efficacyColor(65) },
+                { value: '80% efficacy', color: efficacyColor(80) },
+              ]}
+              setLabelTooltip={setLabelTooltip}
+            />
           </div>
         </div>
       </div>
+      <LabelTooltip tooltip={labelTooltip} />
     </section>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import rctEndpoints from '../data/rct_endpoints.json';
 import { efficacyColor } from '../utils/dataTransforms.js';
+import { efficacyDescriptions, durationDescriptions } from '../utils/paramDescriptions.js';
 
 // ---------------------------------------------------------------------------
 // Build chart data: header rows + data rows grouped by duration (18 → 12 → 6)
@@ -43,40 +44,60 @@ for (const dur of durations) {
 }
 
 // ---------------------------------------------------------------------------
-// Custom YAxis tick: bold blue for headers, normal gray for data rows
+// Custom YAxis tick: bold blue for duration headers, gray for efficacy rows
+// Both types show a hover description popup
 // ---------------------------------------------------------------------------
 
-function CustomYAxisTick({ x, y, payload }) {
+function CustomYAxisTick({ x, y, payload, setLabelTooltip }) {
   const entry = chartData.find((d) => d.name === payload.value);
   if (!entry) return null;
+
+  const handlers = (desc, label) => ({
+    style: { cursor: 'help' },
+    onMouseEnter: (e) => setLabelTooltip({ label, desc, x: e.clientX, y: e.clientY }),
+    onMouseLeave: () => setLabelTooltip(null),
+    onMouseMove:  (e) => setLabelTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null),
+  });
+
   if (entry.isHeader) {
+    const dur  = parseInt(entry.name);
+    const desc = durationDescriptions[dur];
     return (
-      <text
-        x={x}
-        y={y}
-        dy={4}
-        textAnchor="end"
-        fontSize={11}
-        fontFamily="IBM Plex Serif, serif"
-        fontWeight={700}
-        fill="#1e3a5f"
-      >
-        {entry.name}
-      </text>
+      <g {...handlers(desc, entry.name)}>
+        <text x={x} y={y} dy={4} textAnchor="end"
+          fontSize={11} fontFamily="IBM Plex Serif, serif" fontWeight={700} fill="#1e3a5f">
+          {entry.name}
+        </text>
+      </g>
     );
   }
+
+  const desc = efficacyDescriptions[entry.efficacy];
   return (
-    <text
-      x={x}
-      y={y}
-      dy={4}
-      textAnchor="end"
-      fontSize={11}
-      fontFamily="IBM Plex Sans, sans-serif"
-      fill="#6B7280"
+    <g {...handlers(desc, entry.label)}>
+      <text x={x} y={y} dy={4} textAnchor="end"
+        fontSize={11} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
+        {entry.label}
+      </text>
+    </g>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Floating label tooltip (fixed position)
+// ---------------------------------------------------------------------------
+
+function LabelTooltip({ tooltip }) {
+  if (!tooltip) return null;
+  return (
+    <div
+      style={{ position: 'fixed', left: tooltip.x + 14, top: tooltip.y + 14,
+        zIndex: 9999, maxWidth: 280, pointerEvents: 'none' }}
+      className="bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-xs font-sans"
     >
-      {entry.label}
-    </text>
+      <p className="font-semibold text-gray-700 mb-1">{tooltip.label}</p>
+      <p className="text-gray-500 leading-relaxed">{tooltip.desc}</p>
+    </div>
   );
 }
 
@@ -103,7 +124,7 @@ function DiamondLabel(props) {
 }
 
 // ---------------------------------------------------------------------------
-// Custom tooltip
+// Custom bar tooltip
 // ---------------------------------------------------------------------------
 
 function CustomTooltip({ active, payload, tppThreshold }) {
@@ -132,7 +153,7 @@ function CustomTooltip({ active, payload, tppThreshold }) {
 }
 
 // ---------------------------------------------------------------------------
-// Custom legend
+// Static legend
 // ---------------------------------------------------------------------------
 
 function CustomLegend() {
@@ -160,6 +181,7 @@ function CustomLegend() {
 
 export default function RCTEndpoints() {
   const [tppThreshold, setTppThreshold] = useState(70);
+  const [labelTooltip, setLabelTooltip] = useState(null);
 
   return (
     <section id="rct" className="py-16 bg-brand-grayLight">
@@ -174,6 +196,7 @@ export default function RCTEndpoints() {
             Predicted durable cure endpoints at 6 months post-treatment for each efficacy ×
             duration scenario. Bars show Nugent score 0–3 (% participants); diamonds show CST I
             (<em>Lactobacillus crispatus</em>-dominant) prevalence at 6 months.
+            Hover over row labels for parameter definitions.
           </p>
         </div>
 
@@ -241,14 +264,13 @@ export default function RCTEndpoints() {
               <YAxis
                 type="category"
                 dataKey="name"
-                tick={<CustomYAxisTick />}
+                tick={<CustomYAxisTick setLabelTooltip={setLabelTooltip} />}
                 axisLine={false}
                 tickLine={false}
                 width={115}
               />
               <Tooltip content={<CustomTooltip tppThreshold={tppThreshold} />} />
 
-              {/* Configurable TPP threshold line */}
               <ReferenceLine
                 x={tppThreshold}
                 stroke="#0E7490"
@@ -264,7 +286,6 @@ export default function RCTEndpoints() {
                 }}
               />
 
-              {/* Nugent 0-3 bars, colored by efficacy, with diamond labels for CST I */}
               <Bar dataKey="nugent" name="Nugent 0–3 at 6m" barSize={16} opacity={0.85}
                 label={<DiamondLabel />}>
                 {chartData.map((entry, index) => (
@@ -279,6 +300,7 @@ export default function RCTEndpoints() {
           <CustomLegend />
         </div>
       </div>
+      <LabelTooltip tooltip={labelTooltip} />
     </section>
   );
 }
