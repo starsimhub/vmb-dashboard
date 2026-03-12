@@ -229,15 +229,6 @@ const ACCORDION_SECTIONS = [
     content: (
       <div className="space-y-4 text-sm text-gray-600 font-sans leading-relaxed">
         <div>
-          <h4 className="font-semibold text-gray-800 mb-1.5">Agents</h4>
-          <p>
-            Each simulation initializes 100,000 female agents of reproductive age (15–49 years),
-            with age-stratified HIV prevalence, BV prevalence, and pregnancy rates drawn from
-            calibration data. Male agents are represented implicitly through a partnership network
-            that transmits HIV risk.
-          </p>
-        </div>
-        <div>
           <h4 className="font-semibold text-gray-800 mb-1.5">BV natural history</h4>
           <p>
             Vaginal microbiome state is represented as one of five community state types (CST I–V),
