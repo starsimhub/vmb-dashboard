@@ -48,7 +48,7 @@ function computeIcer(scenario, costPerCourse) {
 // Color for ICER cell
 function icerCellStyle(icer, wtpThreshold) {
   if (icer <= 0)     return { bg: '#dcfce7', text: '#15803d', label: 'Cost savings' };
-  if (icer <= wtpThreshold * 0.5) return { bg: '#d1fae5', text: '#065f46', label: fmtDollar(icer) };
+  if (icer <= wtpThreshold * 0.5) return { bg: '#dbeafe', text: '#1d4ed8', label: fmtDollar(icer) };
   if (icer <= wtpThreshold) return { bg: '#fef9c3', text: '#854d0e', label: fmtDollar(icer) };
   return { bg: '#fee2e2', text: '#991b1b', label: fmtDollar(icer) };
 }
@@ -369,7 +369,7 @@ export default function CostEffectiveness() {
             <span className="text-gray-500">ICER legend:</span>
             {[
               { bg: '#dcfce7', text: '#15803d', label: 'Cost savings (HSCA > program cost)' },
-              { bg: '#d1fae5', text: '#065f46', label: `< ½ WTP threshold` },
+              { bg: '#dbeafe', text: '#1d4ed8', label: `< ½ WTP threshold` },
               { bg: '#fef9c3', text: '#854d0e', label: `> ½ WTP, ≤ WTP threshold` },
               { bg: '#fee2e2', text: '#991b1b', label: `> WTP threshold` },
             ].map((k) => (
