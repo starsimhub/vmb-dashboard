@@ -74,7 +74,7 @@ export default function Footer() {
         {/* Logos */}
         <div className="flex items-center gap-6 mb-8">
           <img
-            src="/idmod-logo.jpg"
+            src="/IDMlogo.png"
             alt="Institute for Disease Modeling"
             className="h-8 opacity-80 brightness-0 invert"
           />
