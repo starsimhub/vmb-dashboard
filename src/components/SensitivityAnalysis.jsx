@@ -95,7 +95,7 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip }) {
         y={y}
         dy={4}
         textAnchor="end"
-        fontSize={10}
+        fontSize={12}
         fontFamily="IBM Plex Sans, sans-serif"
         fill={hasDesc ? '#0E7490' : '#6B7280'}
       >
@@ -218,14 +218,14 @@ function TornadoPanel({ title, data, showPct }) {
               if (abs >= 1000) return (v / 1000).toFixed(0) + 'k';
               return v.toLocaleString();
             }}
-            tick={{ fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+            tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
             axisLine={false}
             tickLine={false}
             label={{
               value: showPct ? 'Change vs reference (%)' : 'Delta vs reference (count)',
               position: 'insideBottom',
               offset: -16,
-              fontSize: 11,
+              fontSize: 13,
               fontFamily: 'IBM Plex Sans',
               fill: '#6B7280',
             }}

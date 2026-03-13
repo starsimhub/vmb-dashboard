@@ -84,7 +84,7 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
     return (
       <g {...handlers(desc, entry.name)}>
         <text x={x} y={y} dy={4} textAnchor="end"
-          fontSize={11} fontFamily="IBM Plex Serif, serif" fontWeight={700} fill="#1e3a5f">
+          fontSize={13} fontFamily="IBM Plex Serif, serif" fontWeight={700} fill="#1e3a5f">
           {entry.name}
         </text>
         <text x={x + 12} y={y} dy={4} textAnchor="start"
@@ -102,13 +102,13 @@ function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
   return (
     <g {...handlers(desc, entry.label)}>
       {/* pass/fail dot — sits just left of the label text */}
-      <circle cx={x - 80} cy={y + 1} r={4} fill={dotColor} />
+      <circle cx={x - 96} cy={y + 1} r={4} fill={dotColor} />
       <text x={x - 8} y={y} dy={4} textAnchor="end"
-        fontSize={11} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
+        fontSize={13} fontFamily="IBM Plex Sans, sans-serif" fill="#6B7280">
         {entry.label}
       </text>
       <text x={x - 6} y={y} dy={4} textAnchor="start"
-        fontSize={10} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
+        fontSize={12} fontFamily="IBM Plex Sans, sans-serif" fill="#4B5563">
         ⓘ
       </text>
     </g>
@@ -325,14 +325,14 @@ export default function RCTEndpoints() {
                 type="number"
                 domain={[0, 100]}
                 ticks={[0, 20, 40, 60, 80, 100]}
-                tick={{ fontSize: 11, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+                tick={{ fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
                 axisLine={false}
                 tickLine={false}
                 label={{
                   value: 'Durable cure (%)',
                   position: 'insideBottom',
                   offset: -18,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontFamily: 'IBM Plex Sans',
                   fill: '#6B7280',
                 }}
@@ -355,7 +355,7 @@ export default function RCTEndpoints() {
                 label={{
                   value: `TPP: ${tppThreshold}%`,
                   position: 'top',
-                  fontSize: 10,
+                  fontSize: 12,
                   fontFamily: 'IBM Plex Sans',
                   fill: '#0E7490',
                   fontWeight: 600,

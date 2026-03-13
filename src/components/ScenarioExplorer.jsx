@@ -419,14 +419,14 @@ export default function ScenarioExplorer() {
                   type="number"
                   domain={[0, xMaxHiv]}
                   tickFormatter={showPct ? (v) => `${v}%` : (v) => formatNumber(v, 0)}
-                  tick={{ fontSize: 11, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+                  tick={{ fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
                   axisLine={false}
                   tickLine={false}
                   label={{
                     value: showPct ? '% of infections averted' : 'Infections averted',
                     position: 'insideBottom',
                     offset: -14,
-                    fontSize: 11,
+                    fontSize: 13,
                     fontFamily: 'IBM Plex Sans',
                     fill: '#6B7280',
                   }}
@@ -473,14 +473,14 @@ export default function ScenarioExplorer() {
                   type="number"
                   domain={[0, xMaxPtb]}
                   tickFormatter={showPct ? (v) => `${v}%` : (v) => formatNumber(v, 0)}
-                  tick={{ fontSize: 11, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+                  tick={{ fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
                   axisLine={false}
                   tickLine={false}
                   label={{
                     value: showPct ? '% of births averted' : 'Preterm births averted',
                     position: 'insideBottom',
                     offset: -14,
-                    fontSize: 11,
+                    fontSize: 13,
                     fontFamily: 'IBM Plex Sans',
                     fill: '#6B7280',
                   }}

@@ -106,19 +106,19 @@ function DalysChart() {
           <XAxis
             type="number"
             tickFormatter={(v) => (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : (v / 1000).toFixed(0) + 'k')}
-            tick={{ fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+            tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
             axisLine={false} tickLine={false}
-            label={{ value: 'DALYs averted', position: 'insideBottom', offset: -16, fontSize: 11, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+            label={{ value: 'DALYs averted', position: 'insideBottom', offset: -16, fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
           />
           <YAxis
             type="category" dataKey="label"
-            tick={{ fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+            tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
             axisLine={false} tickLine={false} width={100}
           />
           <Tooltip content={<StackedTooltip valueFormatter={fmtM} />} />
           <Legend
             verticalAlign="top" height={28}
-            formatter={(v) => <span style={{ fontSize: 11, fontFamily: 'IBM Plex Sans', color: '#374151' }}>{v}</span>}
+            formatter={(v) => <span style={{ fontSize: 13, fontFamily: 'IBM Plex Sans', color: '#374151' }}>{v}</span>}
           />
           <Bar dataKey="hiv_dalys" name="HIV"   stackId="a" fill="#ef4444" opacity={0.85} barSize={18} />
           <Bar dataKey="ptb_dalys" name="Preterm birth" stackId="a" fill="#3b82f6" opacity={0.85} barSize={18} />
@@ -161,19 +161,19 @@ function HscaChart() {
               if (Math.abs(v) >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
               return '$' + (v / 1e6).toFixed(0) + 'M';
             }}
-            tick={{ fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+            tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
             axisLine={false} tickLine={false}
-            label={{ value: 'Health system costs averted (USD)', position: 'insideBottom', offset: -16, fontSize: 11, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+            label={{ value: 'Health system costs averted (USD)', position: 'insideBottom', offset: -16, fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
           />
           <YAxis
             type="category" dataKey="label"
-            tick={{ fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+            tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
             axisLine={false} tickLine={false} width={100}
           />
           <Tooltip content={<StackedTooltip valueFormatter={fmtB} />} />
           <Legend
             verticalAlign="top" height={28}
-            formatter={(v) => <span style={{ fontSize: 11, fontFamily: 'IBM Plex Sans', color: '#374151' }}>{v}</span>}
+            formatter={(v) => <span style={{ fontSize: 13, fontFamily: 'IBM Plex Sans', color: '#374151' }}>{v}</span>}
           />
           <Bar dataKey="hiv_hsca" name="HIV"   stackId="a" fill="#ef4444" opacity={0.85} barSize={18} />
           <Bar dataKey="ptb_hsca" name="Preterm birth" stackId="a" fill="#3b82f6" opacity={0.85} barSize={18} />
