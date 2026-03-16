@@ -406,7 +406,7 @@ export default function Methods() {
           <div className="mt-6 bg-gray-50 rounded-xl border border-gray-200 px-5 py-4">
             <p className="text-xs text-gray-500 font-sans leading-relaxed">
               <span className="font-semibold text-gray-700">Cite this work:</span>{' '}
-              Cohen J, Dillard L, et al. "Population impact of vaginal microbiome interventions on HIV
+              Cohen J, Snyder L, Dillard L, et al. "Population impact of vaginal microbiome interventions on HIV
               incidence and preterm birth: an agent-based modeling study." <em>Manuscript in preparation</em>, 2026.
             </p>
           </div>
