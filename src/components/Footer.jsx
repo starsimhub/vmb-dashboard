@@ -57,7 +57,7 @@ export default function Footer() {
               Contact
             </h4>
             <p className="text-sm text-blue-200 font-sans leading-relaxed mb-1">
-              Jamie Cohen, Lillian Dillard
+              Jamie Cohen, Lauren Snyder, Lillian Dillard
             </p>
             <p className="text-sm text-blue-200 font-sans leading-relaxed mb-1">
               Institute for Disease Modeling

@@ -12,12 +12,12 @@ export default function Overview() {
 
           {/* Title */}
           <h1 className="font-serif text-4xl font-semibold text-brand-blue leading-tight mb-4">
-            Vaginal microbiome therapies could curb HIV and preterm births — an IDM model
+            Vaginal microbiome therapies could curb HIV and preterm births — an IDM and IPM model
           </h1>
 
           {/* Authors / institution */}
           <p className="text-sm text-gray-500 mb-8 font-sans">
-            Jamie Cohen, Lillian Dillard &nbsp;·&nbsp; Institute for Disease Modeling &nbsp;·&nbsp;
+            Jamie Cohen, Lauren Snyder, Lillian Dillard &nbsp;·&nbsp; Institute for Disease Modeling &nbsp;·&nbsp;
             <a href="/VMB_MANUSCRIPT_DRAFT_v2.pdf" className="text-brand-teal hover:underline">
               Preprint
             </a>
@@ -33,7 +33,7 @@ export default function Overview() {
               Bacterial vaginosis (BV) — a disruption of the vaginal microbiome that affects up to
               half of women of reproductive age in sub-Saharan Africa — has been independently
               linked to a heightened risk of HIV infection and spontaneous preterm birth. Now,
-              researchers at the Institute for Disease Modeling (IDM) report new modeling results
+              researchers at the Institute for Disease Modeling (IDM) and IPM report new modeling results
               that suggest a next generation of vaginal microbiome therapies could significantly
               reduce both.
             </p>
