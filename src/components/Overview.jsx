@@ -18,7 +18,7 @@ export default function Overview() {
           {/* Authors / institution */}
           <p className="text-sm text-gray-500 mb-8 font-sans">
             Jamie Cohen, Lauren Snyder, Lillian Dillard &nbsp;·&nbsp; Institute for Disease Modeling &amp; Integrated Portfolio Management &nbsp;·&nbsp;
-            <a href="/VMB_MANUSCRIPT_DRAFT_v2.pdf" className="text-brand-teal hover:underline">
+            <a href={`${import.meta.env.BASE_URL}VMB_MANUSCRIPT_DRAFT_v2.pdf`} className="text-brand-teal hover:underline">
               Preprint
             </a>
             &nbsp;·&nbsp;
