@@ -266,7 +266,7 @@ const ACCORDION_SECTIONS = [
           </p>
           <figure className="mt-2">
             <img
-              src="/pregnancy_ptb.png"
+              src={`${import.meta.env.BASE_URL}pregnancy_ptb.png`}
               alt="Inflammation accumulation during pregnancy and pre-term birth risk mechanism"
               className="w-full rounded-lg border border-gray-100"
             />
