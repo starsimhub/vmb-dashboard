@@ -124,26 +124,26 @@ Search for these tokens and replace them throughout the codebase:
 
 ### GitHub Pages
 
-1. Install the gh-pages plugin:
-   ```bash
-   npm install --save-dev gh-pages
-   ```
+GitHub Pages deployment is already configured. The `gh-pages` package is installed
+and `vite.config.js` uses `base: './'` (relative paths), which works when serving
+from the repo subpath.
 
-2. Add to `package.json` scripts:
-   ```json
-   "predeploy": "npm run build",
-   "deploy": "gh-pages -d dist"
-   ```
+To build and publish, run:
 
-3. Set `base` in `vite.config.js` to your repo name:
-   ```js
-   base: '/your-repo-name/'
-   ```
+```bash
+yarn deploy
+```
 
-4. Run:
-   ```bash
-   npm run deploy
-   ```
+This runs `gh-pages-clean && yarn build && gh-pages -d dist`, which:
+
+1. Clears the local `gh-pages` cache (prevents the `"branch named 'gh-pages'
+   already exists"` error on repeat deploys)
+2. Builds the production bundle into `dist/`
+3. Pushes `dist/` to the `gh-pages` branch of `origin`
+
+**One-time setup:** In the GitHub repo, go to **Settings → Pages** and set the
+source to the **`gh-pages`** branch (root `/`). The site will then be live at
+`https://<owner>.github.io/vmb-dashboard/`.
 
 ### Static hosting (Netlify, S3, etc.)
 
