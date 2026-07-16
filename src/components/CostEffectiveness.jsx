@@ -43,12 +43,28 @@ function adjustedHsca(scenario, hivCostRatio = 1) {
   return hivPart * hivCostRatio + ptbPart;
 }
 
-// Compute ICER for a given scenario, cost per course, and HIV-cost scaling.
-// Returns a negative value when cost-saving.
-function computeIcer(scenario, costPerCourse, hivCostRatio = 1) {
+// Compute ICER for a given scenario, cost per course, HIV-cost scaling, and an
+// optional MTZ cost offset (dollars of BV-treatment cost averted). Returns a
+// negative value when cost-saving.
+function computeIcer(scenario, costPerCourse, hivCostRatio = 1, mtzOffset = 0) {
   const programCost = scenario.lbp_volume * costPerCourse;
-  const net = programCost - adjustedHsca(scenario, hivCostRatio);
+  const net = programCost - adjustedHsca(scenario, hivCostRatio) - mtzOffset;
   return net / scenario.dalys_averted; // can be negative
+}
+
+// Timing-aware discount factor for a flow: (Σ x_t / (1+r)^(t−2035)) / Σ x_t,
+// applied to a cumulative total. Returns 1 (no discounting) at r=0, for empty
+// streams, or when the stream is ill-conditioned (non-positive / mixed sign).
+function discountFactor(stream, years, rate) {
+  if (!rate || !stream || !years || stream.length === 0) return 1;
+  let num = 0, den = 0;
+  for (let i = 0; i < stream.length; i++) {
+    num += stream[i] / Math.pow(1 + rate, years[i] - 2035);
+    den += stream[i];
+  }
+  if (den <= 0) return 1;
+  const f = num / den;
+  return (isFinite(f) && f > 0 && f <= 1.5) ? f : 1;
 }
 
 // Color for ICER cell
@@ -193,7 +209,7 @@ function HscaChart({ sorted, hivCostRatio, hivCostAverted }) {
 // ICER interactive grid
 // ---------------------------------------------------------------------------
 
-function IcerGrid({ sorted, costPerCourse, wtpThreshold, hivCostRatio }) {
+function IcerGrid({ sorted, costPerCourse, wtpThreshold, hivCostRatio, mtzCost, popMtzById }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm font-sans border-collapse">
@@ -210,7 +226,8 @@ function IcerGrid({ sorted, costPerCourse, wtpThreshold, hivCostRatio }) {
         </thead>
         <tbody>
           {sorted.map((s) => {
-            const icer      = computeIcer(s, costPerCourse, hivCostRatio);
+            const mtzOffset = (popMtzById[s.id] || 0) * (mtzCost || 0);
+            const icer      = computeIcer(s, costPerCourse, hivCostRatio, mtzOffset);
             const programCost = s.lbp_volume * costPerCourse;
             const style     = icerCellStyle(icer, wtpThreshold);
             return (
@@ -226,7 +243,7 @@ function IcerGrid({ sorted, costPerCourse, wtpThreshold, hivCostRatio }) {
                   {s.dalys_averted.toLocaleString()}
                 </td>
                 <td className="py-2 px-3 text-xs text-gray-600 text-right tabular-nums">
-                  {fmtB(adjustedHsca(s, hivCostRatio))}
+                  {fmtB(adjustedHsca(s, hivCostRatio) + mtzOffset)}
                 </td>
                 <td className="py-2 px-3 text-xs text-gray-600 text-right tabular-nums">
                   {fmtB(programCost)}
@@ -266,7 +283,7 @@ function IcerDriversTooltip({ active, payload, label }) {
   );
 }
 
-function IcerDriversChart({ scenarios, costPerCourse, wtpThreshold, hivCostRatio }) {
+function IcerDriversChart({ scenarios, costPerCourse, wtpThreshold, hivCostRatio, mtzCost, popMtzById }) {
   const durations = useMemo(
     () => [...new Set(scenarios.map((s) => s.duration_months))].sort((a, b) => a - b),
     [scenarios]
@@ -282,11 +299,12 @@ function IcerDriversChart({ scenarios, costPerCourse, wtpThreshold, hivCostRatio
         scenarios
           .filter((s) => s.duration_months === dur)
           .forEach((s) => {
-            row[`eff${s.efficacy_pct}`] = Math.round(computeIcer(s, costPerCourse, hivCostRatio));
+            const mtzOffset = (popMtzById[s.id] || 0) * (mtzCost || 0);
+            row[`eff${s.efficacy_pct}`] = Math.round(computeIcer(s, costPerCourse, hivCostRatio, mtzOffset));
           });
         return row;
       }),
-    [durations, scenarios, costPerCourse, hivCostRatio]
+    [durations, scenarios, costPerCourse, hivCostRatio, mtzCost, popMtzById]
   );
 
   return (
@@ -343,13 +361,19 @@ function IcerDriversChart({ scenarios, costPerCourse, wtpThreshold, hivCostRatio
 // Derive an ICER for a sensitivity scenario from its model-averted HIV/PTB
 // counts, LBP volume, and the per-case DALY / cost-offset assumptions.
 // Returns null when the scenario lacks a treatment volume.
-function sensitivityIcer(s, costPerCourse, a, hivCostAverted) {
+function sensitivityIcer(s, costPerCourse, a, hivCostAverted, mtzCost = 0, discountRate = 0) {
   if (s.lbp_volume === null || s.lbp_volume === undefined) return null;
+  const ds = s.discount_streams || {};
+  const yrs = ds.years || [];
+  const hiv = s.hiv_averted_median * discountFactor(ds.hiv_averted, yrs, discountRate);
+  const ptb = s.ptb_averted_median * discountFactor(ds.ptb_averted, yrs, discountRate);
+  const vol = s.lbp_volume        * discountFactor(ds.lbp_volume, yrs, discountRate);
+  const mtz = (s.mtz_averted_median || 0) * discountFactor(ds.mtz_averted, yrs, discountRate);
   const hivCost = hivCostAverted ?? a.hsca_per_hiv;
-  const dalys = s.hiv_averted_median * a.dalys_per_hiv + s.ptb_averted_median * a.dalys_per_ptb;
-  const hsca  = s.hiv_averted_median * hivCost + s.ptb_averted_median * a.hsca_per_ptb;
+  const dalys = hiv * a.dalys_per_hiv + ptb * a.dalys_per_ptb;
   if (!dalys) return null;
-  const programCost = s.lbp_volume * costPerCourse;
+  const hsca = hiv * hivCost + ptb * a.hsca_per_ptb + mtz * (mtzCost || 0);
+  const programCost = vol * costPerCourse;
   return (programCost - hsca) / dalys;
 }
 
@@ -378,14 +402,14 @@ function IcerTornadoTooltip({ active, payload }) {
   );
 }
 
-function IcerTornado({ sensitivityScenarios, assumptions, costPerCourse, wtpThreshold, hivCostAverted }) {
+function IcerTornado({ sensitivityScenarios, assumptions, costPerCourse, wtpThreshold, hivCostAverted, mtzCost, discountRate }) {
   const data = useMemo(() => {
     const rows = sensitivityScenarios
       .map((s) => ({
         id: s.id,
         label: sensitivityLabel(s.label),
         isRef: s.id === 'reference',
-        icer: sensitivityIcer(s, costPerCourse, assumptions, hivCostAverted),
+        icer: sensitivityIcer(s, costPerCourse, assumptions, hivCostAverted, mtzCost, discountRate),
       }))
       .filter((r) => r.icer !== null);
     const ref = rows.find((r) => r.isRef);
@@ -397,7 +421,7 @@ function IcerTornado({ sensitivityScenarios, assumptions, costPerCourse, wtpThre
         deltaVsRef: refIcer === null ? null : Math.round(r.icer - refIcer),
       }))
       .sort((a, b) => a.icer - b.icer);
-  }, [sensitivityScenarios, assumptions, costPerCourse, hivCostAverted]);
+  }, [sensitivityScenarios, assumptions, costPerCourse, hivCostAverted, mtzCost, discountRate]);
 
   if (data.length === 0) return null;
   const refIcer = data.find((d) => d.isRef)?.icer;
@@ -487,8 +511,12 @@ function AssumptionsCard({ assumptions }) {
 // ---------------------------------------------------------------------------
 
 export default function CostEffectiveness() {
-  const { ceData, sensitivityScenarios } = useVersion();
+  const { ceData, sensitivityScenarios, populationScenarios } = useVersion();
   const { assumptions, scenarios } = ceData;
+  const popMtzById = useMemo(
+    () => Object.fromEntries((populationScenarios || []).map((p) => [p.id, p.mtz_averted_median || 0])),
+    [populationScenarios]
+  );
   const sorted = useMemo(
     () => [...scenarios].sort(
       (a, b) => b.duration_months - a.duration_months || a.efficacy_pct - b.efficacy_pct
@@ -500,6 +528,9 @@ export default function CostEffectiveness() {
   const defaultHivCost = assumptions.hsca_per_hiv || 11872;
   const [hivCostAverted, setHivCostAverted] = useState(defaultHivCost);
   const hivCostRatio = defaultHivCost ? hivCostAverted / defaultHivCost : 1;
+  const [mtzCost, setMtzCost] = useState(0);
+  const [discountPct, setDiscountPct] = useState(0);
+  const discountRate = discountPct / 100;
 
   return (
     <section id="ce" className="py-16 bg-brand-grayLight">
@@ -606,6 +637,54 @@ export default function CostEffectiveness() {
                 </div>
               </div>
             </div>
+
+            {/* MTZ cost averted per course slider */}
+            <div className="bg-brand-grayLight rounded-lg p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+                BV treatment (MTZ) cost averted per course
+              </p>
+              <p className="text-xs text-gray-400 font-sans mb-3">
+                LBP reduces BV recurrence → fewer future metronidazole courses. $0 = excluded (default).
+                Use drug-only (~$2) or full care episode (~$25).
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400 w-4">$0</span>
+                <input
+                  type="range" min={0} max={50} step={1}
+                  value={mtzCost}
+                  onChange={(e) => setMtzCost(Number(e.target.value))}
+                  className="flex-1 accent-brand-teal cursor-pointer"
+                />
+                <span className="text-xs text-gray-400 w-7">$50</span>
+                <div className="bg-brand-teal text-white rounded-lg px-3 py-1 min-w-[56px] text-center">
+                  <span className="font-serif font-bold text-base">${mtzCost}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Discount rate slider */}
+            <div className="bg-brand-grayLight rounded-lg p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+                Discount rate (model-derived flows)
+              </p>
+              <p className="text-xs text-gray-400 font-sans mb-3">
+                Applied to the sensitivity tornado (costs &amp; DALYs, base year 2035). 0% = undiscounted (default).
+                Headline grid uses IPM totals as provided.
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400 w-4">0%</span>
+                <input
+                  type="range" min={0} max={8} step={0.5}
+                  value={discountPct}
+                  onChange={(e) => setDiscountPct(Number(e.target.value))}
+                  className="flex-1 accent-brand-blue cursor-pointer"
+                />
+                <span className="text-xs text-gray-400 w-7">8%</span>
+                <div className="bg-brand-blue text-white rounded-lg px-3 py-1 min-w-[56px] text-center">
+                  <span className="font-serif font-bold text-base">{discountPct}%</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Color key */}
@@ -627,7 +706,7 @@ export default function CostEffectiveness() {
             ))}
           </div>
 
-          <IcerGrid sorted={sorted} costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} hivCostRatio={hivCostRatio} />
+          <IcerGrid sorted={sorted} costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} hivCostRatio={hivCostRatio} mtzCost={mtzCost} popMtzById={popMtzById} />
         </div>
 
         {/* ICER drivers: efficacy & durability */}
@@ -642,7 +721,7 @@ export default function CostEffectiveness() {
             Durability is the dominant lever — longer duration drives ICERs down sharply as HIV
             benefit (and the associated cost offset) accrues.
           </p>
-          <IcerDriversChart scenarios={sorted} costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} hivCostRatio={hivCostRatio} />
+          <IcerDriversChart scenarios={sorted} costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} hivCostRatio={hivCostRatio} mtzCost={mtzCost} popMtzById={popMtzById} />
         </div>
 
         {/* ICER drivers: sensitivity parameters */}
@@ -657,6 +736,9 @@ export default function CostEffectiveness() {
             drivers. ICERs here are derived from model-averted HIV/PTB counts and each scenario&rsquo;s LBP
             volume, applying the per-case DALY and cost-offset assumptions above — computed consistently
             across scenarios for comparison, so absolute values may differ from the headline grid.
+            When set, the MTZ offset and discount rate apply here (base year 2035). The two non-BV VDS
+            scenarios omit the MTZ offset — their model outputs lack a VDS-matched no-LBP baseline, so
+            MTZ averted can&rsquo;t be computed reliably.
           </p>
           <IcerTornado
             sensitivityScenarios={sensitivityScenarios}
@@ -664,6 +746,8 @@ export default function CostEffectiveness() {
             costPerCourse={costPerCourse}
             wtpThreshold={wtpThreshold}
             hivCostAverted={hivCostAverted}
+            mtzCost={mtzCost}
+            discountRate={discountRate}
           />
         </div>
       </div>
