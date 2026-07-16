@@ -2,6 +2,10 @@ import React, { useState, useMemo } from 'react';
 import {
   BarChart,
   Bar,
+  Cell,
+  LineChart,
+  Line,
+  ReferenceLine,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -10,7 +14,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useVersion } from '../contexts/VersionContext.jsx';
-import { efficacyColor } from '../utils/dataTransforms.js';
+import { efficacyColor, sensitivityLabel } from '../utils/dataTransforms.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -30,11 +34,20 @@ function fmtDollar(n) {
   return '$' + Math.round(n).toLocaleString();
 }
 
-// Compute ICER for a given scenario and cost per course
-// Returns null when cost-saving (negative ICER)
-function computeIcer(scenario, costPerCourse) {
+// Scale the HIV portion of a scenario's health-system cost averted by a ratio
+// (the selected lifetime cost per HIV case ÷ the default). At ratio = 1 this
+// returns the scenario's original baked-in HSCA.
+function adjustedHsca(scenario, hivCostRatio = 1) {
+  const hivPart = scenario.hsca * scenario.hiv_hsca_pct / 100;
+  const ptbPart = scenario.hsca * scenario.ptb_hsca_pct / 100;
+  return hivPart * hivCostRatio + ptbPart;
+}
+
+// Compute ICER for a given scenario, cost per course, and HIV-cost scaling.
+// Returns a negative value when cost-saving.
+function computeIcer(scenario, costPerCourse, hivCostRatio = 1) {
   const programCost = scenario.lbp_volume * costPerCourse;
-  const net = programCost - scenario.hsca;
+  const net = programCost - adjustedHsca(scenario, hivCostRatio);
   return net / scenario.dalys_averted; // can be negative
 }
 
@@ -125,10 +138,10 @@ function DalysChart({ sorted }) {
 // Health system costs averted chart
 // ---------------------------------------------------------------------------
 
-function HscaChart({ sorted }) {
+function HscaChart({ sorted, hivCostRatio, hivCostAverted }) {
   const data = sorted.map((s) => ({
     label: s.label,
-    hiv_hsca: Math.round(s.hsca * s.hiv_hsca_pct / 100),
+    hiv_hsca: Math.round(s.hsca * s.hiv_hsca_pct / 100 * hivCostRatio),
     ptb_hsca: Math.round(s.hsca * s.ptb_hsca_pct / 100),
   }));
 
@@ -138,7 +151,7 @@ function HscaChart({ sorted }) {
         Health system costs averted (2026–2050)
       </h3>
       <p className="text-xs text-gray-400 font-sans mb-4">
-        $11,872/HIV infection averted · $448/preterm birth averted (South Africa, preliminary)
+        ${Math.round(hivCostAverted).toLocaleString()}/HIV infection averted · $448/preterm birth averted (South Africa, preliminary)
       </p>
       <ResponsiveContainer width="100%" height={340}>
         <BarChart
@@ -180,7 +193,7 @@ function HscaChart({ sorted }) {
 // ICER interactive grid
 // ---------------------------------------------------------------------------
 
-function IcerGrid({ sorted, costPerCourse, wtpThreshold }) {
+function IcerGrid({ sorted, costPerCourse, wtpThreshold, hivCostRatio }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm font-sans border-collapse">
@@ -197,7 +210,7 @@ function IcerGrid({ sorted, costPerCourse, wtpThreshold }) {
         </thead>
         <tbody>
           {sorted.map((s) => {
-            const icer      = computeIcer(s, costPerCourse);
+            const icer      = computeIcer(s, costPerCourse, hivCostRatio);
             const programCost = s.lbp_volume * costPerCourse;
             const style     = icerCellStyle(icer, wtpThreshold);
             return (
@@ -213,7 +226,7 @@ function IcerGrid({ sorted, costPerCourse, wtpThreshold }) {
                   {s.dalys_averted.toLocaleString()}
                 </td>
                 <td className="py-2 px-3 text-xs text-gray-600 text-right tabular-nums">
-                  {fmtB(s.hsca)}
+                  {fmtB(adjustedHsca(s, hivCostRatio))}
                 </td>
                 <td className="py-2 px-3 text-xs text-gray-600 text-right tabular-nums">
                   {fmtB(programCost)}
@@ -232,6 +245,210 @@ function IcerGrid({ sorted, costPerCourse, wtpThreshold }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ICER drivers chart — how ICER responds to efficacy and duration
+// ---------------------------------------------------------------------------
+
+function IcerDriversTooltip({ active, payload, label }) {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm font-sans">
+      <p className="font-semibold text-gray-700 mb-2">{label}-month duration</p>
+      {payload.map((p) => (
+        <p key={p.dataKey} style={{ color: p.stroke }} className="text-xs">
+          {p.name}: {p.value <= 0 ? 'cost-saving' : fmtDollar(p.value) + '/DALY'}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function IcerDriversChart({ scenarios, costPerCourse, wtpThreshold, hivCostRatio }) {
+  const durations = useMemo(
+    () => [...new Set(scenarios.map((s) => s.duration_months))].sort((a, b) => a - b),
+    [scenarios]
+  );
+  const efficacies = useMemo(
+    () => [...new Set(scenarios.map((s) => s.efficacy_pct))].sort((a, b) => a - b),
+    [scenarios]
+  );
+  const data = useMemo(
+    () =>
+      durations.map((dur) => {
+        const row = { duration: dur };
+        scenarios
+          .filter((s) => s.duration_months === dur)
+          .forEach((s) => {
+            row[`eff${s.efficacy_pct}`] = Math.round(computeIcer(s, costPerCourse, hivCostRatio));
+          });
+        return row;
+      }),
+    [durations, scenarios, costPerCourse, hivCostRatio]
+  );
+
+  return (
+    <ResponsiveContainer width="100%" height={340}>
+      <LineChart data={data} margin={{ top: 12, right: 32, left: 12, bottom: 24 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+        <XAxis
+          dataKey="duration"
+          type="number"
+          domain={['dataMin', 'dataMax']}
+          ticks={durations}
+          tickFormatter={(v) => `${v} mo`}
+          tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+          axisLine={false} tickLine={false}
+          label={{ value: 'Duration of effect (months)', position: 'insideBottom', offset: -14, fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+        />
+        <YAxis
+          tickFormatter={(v) => (v < 0 ? '−$' + Math.abs(v).toLocaleString() : '$' + v.toLocaleString())}
+          tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+          axisLine={false} tickLine={false} width={78}
+          label={{ value: 'ICER ($/DALY)', angle: -90, position: 'insideLeft', offset: 4, fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+        />
+        <Tooltip content={<IcerDriversTooltip />} />
+        <Legend
+          verticalAlign="top" height={28}
+          formatter={(v) => <span style={{ fontSize: 13, fontFamily: 'IBM Plex Sans', color: '#374151' }}>{v}</span>}
+        />
+        <ReferenceLine y={0} stroke="#15803d" strokeDasharray="4 2" strokeWidth={1} />
+        <ReferenceLine
+          y={wtpThreshold} stroke="#991b1b" strokeDasharray="4 2" strokeWidth={1}
+          label={{ value: `WTP $${(wtpThreshold / 1000).toFixed(1)}k`, position: 'right', fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#991b1b' }}
+        />
+        {efficacies.map((eff) => (
+          <Line
+            key={eff}
+            type="monotone"
+            dataKey={`eff${eff}`}
+            name={`${eff}% efficacy`}
+            stroke={efficacyColor(eff)}
+            strokeWidth={2.5}
+            dot={{ r: 4, fill: efficacyColor(eff) }}
+            activeDot={{ r: 6 }}
+          />
+        ))}
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ICER tornado — how each sensitivity parameter shifts the ICER
+// ---------------------------------------------------------------------------
+
+// Derive an ICER for a sensitivity scenario from its model-averted HIV/PTB
+// counts, LBP volume, and the per-case DALY / cost-offset assumptions.
+// Returns null when the scenario lacks a treatment volume.
+function sensitivityIcer(s, costPerCourse, a, hivCostAverted) {
+  if (s.lbp_volume === null || s.lbp_volume === undefined) return null;
+  const hivCost = hivCostAverted ?? a.hsca_per_hiv;
+  const dalys = s.hiv_averted_median * a.dalys_per_hiv + s.ptb_averted_median * a.dalys_per_ptb;
+  const hsca  = s.hiv_averted_median * hivCost + s.ptb_averted_median * a.hsca_per_ptb;
+  if (!dalys) return null;
+  const programCost = s.lbp_volume * costPerCourse;
+  return (programCost - hsca) / dalys;
+}
+
+function icerBarColor(icer, wtp) {
+  if (icer <= 0)   return '#16a34a'; // cost-saving
+  if (icer <= wtp) return '#f59e0b'; // cost-effective at WTP
+  return '#dc2626';                  // above WTP
+}
+
+function IcerTornadoTooltip({ active, payload }) {
+  if (!active || !payload || payload.length === 0) return null;
+  const d = payload[0]?.payload;
+  if (!d) return null;
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm font-sans">
+      <p className="font-semibold text-gray-700 mb-1">{d.label}</p>
+      <p className="text-xs text-gray-600">
+        ICER: <span className="font-semibold">{d.icer <= 0 ? 'cost-saving' : fmtDollar(d.icer) + '/DALY'}</span>
+      </p>
+      {d.deltaVsRef !== null && !d.isRef && (
+        <p className="text-xs text-gray-500">
+          vs reference: {d.deltaVsRef >= 0 ? '+' : '−'}{fmtDollar(Math.abs(d.deltaVsRef))}/DALY
+        </p>
+      )}
+    </div>
+  );
+}
+
+function IcerTornado({ sensitivityScenarios, assumptions, costPerCourse, wtpThreshold, hivCostAverted }) {
+  const data = useMemo(() => {
+    const rows = sensitivityScenarios
+      .map((s) => ({
+        id: s.id,
+        label: sensitivityLabel(s.label),
+        isRef: s.id === 'reference',
+        icer: sensitivityIcer(s, costPerCourse, assumptions, hivCostAverted),
+      }))
+      .filter((r) => r.icer !== null);
+    const ref = rows.find((r) => r.isRef);
+    const refIcer = ref ? ref.icer : null;
+    return rows
+      .map((r) => ({
+        ...r,
+        icer: Math.round(r.icer),
+        deltaVsRef: refIcer === null ? null : Math.round(r.icer - refIcer),
+      }))
+      .sort((a, b) => a.icer - b.icer);
+  }, [sensitivityScenarios, assumptions, costPerCourse, hivCostAverted]);
+
+  if (data.length === 0) return null;
+  const refIcer = data.find((d) => d.isRef)?.icer;
+
+  // Anchor the domain at 0 so the cost-saving line and bar origins are always visible.
+  const vals = data.map((d) => d.icer);
+  const minV = Math.min(0, ...vals);
+  const maxV = Math.max(0, ...vals);
+  const pad = (maxV - minV) * 0.08 || 100;
+  const domainMin = Math.floor((minV - pad) / 50) * 50;
+  const domainMax = Math.ceil((maxV + pad) / 50) * 50;
+  const wtpInRange = wtpThreshold >= domainMin && wtpThreshold <= domainMax;
+
+  return (
+    <ResponsiveContainer width="100%" height={340}>
+      <BarChart data={data} layout="vertical" margin={{ top: 8, right: 28, left: 156, bottom: 28 }} barCategoryGap="22%">
+        <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
+        <XAxis
+          type="number"
+          domain={[domainMin, domainMax]}
+          tickFormatter={(v) => (v < 0 ? '−$' + Math.abs(v).toLocaleString() : '$' + v.toLocaleString())}
+          tick={{ fontSize: 12, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+          axisLine={false} tickLine={false}
+          label={{ value: 'ICER ($/DALY)', position: 'insideBottom', offset: -16, fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+        />
+        <YAxis
+          type="category" dataKey="label"
+          tick={{ fontSize: 11, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+          axisLine={false} tickLine={false} width={150}
+        />
+        <Tooltip content={<IcerTornadoTooltip />} />
+        <ReferenceLine x={0} stroke="#15803d" strokeWidth={1.5} />
+        {refIcer !== undefined && (
+          <ReferenceLine
+            x={refIcer} stroke="#6B7280" strokeDasharray="4 2" strokeWidth={1}
+            label={{ value: 'reference', position: 'top', fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#6B7280' }}
+          />
+        )}
+        {wtpInRange && (
+          <ReferenceLine
+            x={wtpThreshold} stroke="#991b1b" strokeDasharray="4 2" strokeWidth={1}
+            label={{ value: `WTP $${(wtpThreshold / 1000).toFixed(1)}k`, position: 'top', fontSize: 10, fontFamily: 'IBM Plex Sans', fill: '#991b1b' }}
+          />
+        )}
+        <Bar dataKey="icer" barSize={16}>
+          {data.map((entry) => (
+            <Cell key={entry.id} fill={icerBarColor(entry.icer, wtpThreshold)} opacity={0.85} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -270,7 +487,7 @@ function AssumptionsCard({ assumptions }) {
 // ---------------------------------------------------------------------------
 
 export default function CostEffectiveness() {
-  const { ceData } = useVersion();
+  const { ceData, sensitivityScenarios } = useVersion();
   const { assumptions, scenarios } = ceData;
   const sorted = useMemo(
     () => [...scenarios].sort(
@@ -280,6 +497,9 @@ export default function CostEffectiveness() {
   );
   const [costPerCourse, setCostPerCourse] = useState(20);
   const [wtpThreshold, setWtpThreshold]   = useState(3000);
+  const defaultHivCost = assumptions.hsca_per_hiv || 11872;
+  const [hivCostAverted, setHivCostAverted] = useState(defaultHivCost);
+  const hivCostRatio = defaultHivCost ? hivCostAverted / defaultHivCost : 1;
 
   return (
     <section id="ce" className="py-16 bg-brand-grayLight">
@@ -303,7 +523,7 @@ export default function CostEffectiveness() {
         {/* Two stacked bar charts */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <DalysChart sorted={sorted} />
-          <HscaChart sorted={sorted} />
+          <HscaChart sorted={sorted} hivCostRatio={hivCostRatio} hivCostAverted={hivCostAverted} />
         </div>
 
         {/* ICER interactive */}
@@ -317,7 +537,7 @@ export default function CostEffectiveness() {
           </p>
 
           {/* Sliders */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {/* Cost per course slider */}
             <div className="bg-brand-grayLight rounded-lg p-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
@@ -363,6 +583,29 @@ export default function CostEffectiveness() {
                 </div>
               </div>
             </div>
+
+            {/* Lifetime cost averted per HIV case slider */}
+            <div className="bg-brand-grayLight rounded-lg p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+                Lifetime cost averted per HIV case
+              </p>
+              <p className="text-xs text-gray-400 font-sans mb-3">
+                Dominant HSCA lever (HIV ≈ 85–96% of offsets). Default ${Math.round(defaultHivCost).toLocaleString()} (ART + care, 30y).
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400 w-8">$5k</span>
+                <input
+                  type="range" min={5000} max={18000} step={500}
+                  value={hivCostAverted}
+                  onChange={(e) => setHivCostAverted(Number(e.target.value))}
+                  className="flex-1 accent-brand-teal cursor-pointer"
+                />
+                <span className="text-xs text-gray-400 w-9">$18k</span>
+                <div className="bg-brand-teal text-white rounded-lg px-3 py-1 min-w-[64px] text-center">
+                  <span className="font-serif font-bold text-base">${(hivCostAverted / 1000).toFixed(1)}k</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Color key */}
@@ -384,7 +627,44 @@ export default function CostEffectiveness() {
             ))}
           </div>
 
-          <IcerGrid sorted={sorted} costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} />
+          <IcerGrid sorted={sorted} costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} hivCostRatio={hivCostRatio} />
+        </div>
+
+        {/* ICER drivers: efficacy & durability */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+          <h3 className="font-serif font-semibold text-brand-blue text-base mb-1">
+            ICER drivers: efficacy &amp; durability
+          </h3>
+          <p className="text-xs text-gray-400 font-sans mb-4">
+            How the incremental cost per DALY responds to product efficacy and duration of effect,
+            at ${costPerCourse}/course. Lower is better: values on or below the green line (≤ $0) are
+            cost-saving; values below the red line are cost-effective at the selected WTP threshold.
+            Durability is the dominant lever — longer duration drives ICERs down sharply as HIV
+            benefit (and the associated cost offset) accrues.
+          </p>
+          <IcerDriversChart scenarios={sorted} costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} hivCostRatio={hivCostRatio} />
+        </div>
+
+        {/* ICER drivers: sensitivity parameters */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+          <h3 className="font-serif font-semibold text-brand-blue text-base mb-1">
+            ICER drivers: sensitivity parameters
+          </h3>
+          <p className="text-xs text-gray-400 font-sans mb-4">
+            ICER for each sensitivity scenario at ${costPerCourse}/course, relative to the reference
+            (80% efficacy, 12-month duration, dashed line). Bars left of the green line are cost-saving.
+            Durability (&ldquo;low LBP fitness&rdquo;) and efficacy in MTZ non-responders are the strongest
+            drivers. ICERs here are derived from model-averted HIV/PTB counts and each scenario&rsquo;s LBP
+            volume, applying the per-case DALY and cost-offset assumptions above — computed consistently
+            across scenarios for comparison, so absolute values may differ from the headline grid.
+          </p>
+          <IcerTornado
+            sensitivityScenarios={sensitivityScenarios}
+            assumptions={assumptions}
+            costPerCourse={costPerCourse}
+            wtpThreshold={wtpThreshold}
+            hivCostAverted={hivCostAverted}
+          />
         </div>
       </div>
     </section>
