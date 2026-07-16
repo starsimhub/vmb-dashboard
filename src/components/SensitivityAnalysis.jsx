@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,7 +10,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from 'recharts';
-import sensitivityScenarios from '../data/sensitivity_scenarios.json';
+import { useVersion } from '../contexts/VersionContext.jsx';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,25 +48,24 @@ const descriptions = {
 // Prepare data — exclude reference row
 // ---------------------------------------------------------------------------
 
-const hivBase = sensitivityScenarios
-  .filter((s) => s.id !== 'reference')
-  .map((s) => ({
+function buildSensitivityData(sensitivityScenarios) {
+  const filtered = sensitivityScenarios.filter((s) => s.id !== 'reference');
+  const hivData = filtered.map((s) => ({
     label:       shortenLabel(s.label),
     delta:       s.hiv_delta_median,
     delta_p5:    s.hiv_delta_p5,
     delta_p95:   s.hiv_delta_p95,
     pct_change:  s.hiv_pct_change,
   }));
-
-const ptbBase = sensitivityScenarios
-  .filter((s) => s.id !== 'reference')
-  .map((s) => ({
+  const ptbData = filtered.map((s) => ({
     label:       shortenLabel(s.label),
     delta:       s.ptb_delta_median,
     delta_p5:    s.ptb_delta_p5,
     delta_p95:   s.ptb_delta_p95,
     pct_change:  s.ptb_pct_change,
   }));
+  return { hivData, ptbData };
+}
 
 // ---------------------------------------------------------------------------
 // Custom Y-axis tick with hover tooltip
@@ -275,7 +274,12 @@ function TornadoPanel({ title, data, showPct }) {
 // ---------------------------------------------------------------------------
 
 export default function SensitivityAnalysis() {
+  const { sensitivityScenarios } = useVersion();
   const [showPct, setShowPct] = useState(false);
+  const { hivData: hivBase, ptbData: ptbBase } = useMemo(
+    () => buildSensitivityData(sensitivityScenarios),
+    [sensitivityScenarios]
+  );
 
   return (
     <section id="sensitivity" className="py-16 bg-white">

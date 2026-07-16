@@ -9,15 +9,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import ceData from '../data/ce_results.json';
+import { useVersion } from '../contexts/VersionContext.jsx';
 import { efficacyColor } from '../utils/dataTransforms.js';
-
-const { assumptions, scenarios } = ceData;
-
-// Sort: 18m first → 6m last, within group ascending efficacy (matches PDF)
-const sorted = [...scenarios].sort(
-  (a, b) => b.duration_months - a.duration_months || a.efficacy_pct - b.efficacy_pct
-);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -79,7 +72,7 @@ function StackedTooltip({ active, payload, label, valueFormatter }) {
 // DALYs averted chart
 // ---------------------------------------------------------------------------
 
-function DalysChart() {
+function DalysChart({ sorted }) {
   const data = sorted.map((s) => ({
     label: s.label,
     efficacy: s.efficacy_pct,
@@ -132,7 +125,7 @@ function DalysChart() {
 // Health system costs averted chart
 // ---------------------------------------------------------------------------
 
-function HscaChart() {
+function HscaChart({ sorted }) {
   const data = sorted.map((s) => ({
     label: s.label,
     hiv_hsca: Math.round(s.hsca * s.hiv_hsca_pct / 100),
@@ -187,7 +180,7 @@ function HscaChart() {
 // ICER interactive grid
 // ---------------------------------------------------------------------------
 
-function IcerGrid({ costPerCourse, wtpThreshold }) {
+function IcerGrid({ sorted, costPerCourse, wtpThreshold }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm font-sans border-collapse">
@@ -246,7 +239,7 @@ function IcerGrid({ costPerCourse, wtpThreshold }) {
 // Assumptions card
 // ---------------------------------------------------------------------------
 
-function AssumptionsCard() {
+function AssumptionsCard({ assumptions }) {
   return (
     <div className="bg-brand-grayLight rounded-xl border border-gray-200 p-5 mb-8">
       <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3">Key assumptions</p>
@@ -277,6 +270,14 @@ function AssumptionsCard() {
 // ---------------------------------------------------------------------------
 
 export default function CostEffectiveness() {
+  const { ceData } = useVersion();
+  const { assumptions, scenarios } = ceData;
+  const sorted = useMemo(
+    () => [...scenarios].sort(
+      (a, b) => b.duration_months - a.duration_months || a.efficacy_pct - b.efficacy_pct
+    ),
+    [scenarios]
+  );
   const [costPerCourse, setCostPerCourse] = useState(20);
   const [wtpThreshold, setWtpThreshold]   = useState(3000);
 
@@ -297,12 +298,12 @@ export default function CostEffectiveness() {
           </p>
         </div>
 
-        <AssumptionsCard />
+        <AssumptionsCard assumptions={assumptions} />
 
         {/* Two stacked bar charts */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <DalysChart />
-          <HscaChart />
+          <DalysChart sorted={sorted} />
+          <HscaChart sorted={sorted} />
         </div>
 
         {/* ICER interactive */}
@@ -383,7 +384,7 @@ export default function CostEffectiveness() {
             ))}
           </div>
 
-          <IcerGrid costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} />
+          <IcerGrid sorted={sorted} costPerCourse={costPerCourse} wtpThreshold={wtpThreshold} />
         </div>
       </div>
     </section>

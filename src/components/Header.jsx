@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import VersionSelector from './VersionSelector.jsx';
 
 const NAV_LINKS = [
   { label: 'Overview',     href: '#overview' },
@@ -59,6 +60,11 @@ export default function Header() {
             ))}
           </nav>
 
+          {/* Version selector */}
+          <div className="hidden md:block">
+            <VersionSelector />
+          </div>
+
           {/* Mobile menu button */}
           <button
             className="md:hidden p-1.5 rounded text-gray-500 hover:text-brand-blue hover:bg-gray-100 transition-colors"
@@ -90,6 +96,9 @@ export default function Header() {
                 {link.label}
               </a>
             ))}
+            <div className="px-2 pt-2 border-t border-gray-100 mt-2">
+              <VersionSelector />
+            </div>
           </nav>
         )}
       </div>

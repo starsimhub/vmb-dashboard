@@ -1,4 +1,5 @@
 import React from 'react';
+import { VersionProvider } from './contexts/VersionContext.jsx';
 import Header from './components/Header.jsx';
 import Overview from './components/Overview.jsx';
 import ScenarioExplorer from './components/ScenarioExplorer.jsx';
@@ -11,6 +12,7 @@ import Footer from './components/Footer.jsx';
 
 export default function App() {
   return (
+    <VersionProvider>
     <div className="min-h-screen flex flex-col font-sans">
       <Header />
       <main className="flex-1">
@@ -41,5 +43,6 @@ export default function App() {
       </main>
       <Footer />
     </div>
+    </VersionProvider>
   );
 }
