@@ -52,6 +52,20 @@ function computeIcer(scenario, costPerCourse, hivCostRatio = 1, mtzOffset = 0) {
   return net / scenario.dalys_averted; // can be negative
 }
 
+// Standalone ICER for a single indication (HIV or PTB): the indication bears the
+// full LBP program cost, offset only by that indication's own health-system cost
+// averted. Frames "if the product were justified on this indication alone."
+function indicationIcer(s, costPerCourse, hivCostRatio, indication) {
+  const dalyPct = indication === 'hiv' ? s.hiv_daly_pct : s.ptb_daly_pct;
+  const hscaPct = indication === 'hiv' ? s.hiv_hsca_pct : s.ptb_hsca_pct;
+  const dalys = s.dalys_averted * dalyPct / 100;
+  if (!dalys) return null;
+  let hsca = s.hsca * hscaPct / 100;
+  if (indication === 'hiv') hsca *= hivCostRatio;
+  const programCost = s.lbp_volume * costPerCourse;
+  return (programCost - hsca) / dalys;
+}
+
 // Timing-aware discount factor for a flow: (Σ x_t / (1+r)^(t−2035)) / Σ x_t,
 // applied to a cumulative total. Returns 1 (no discounting) at r=0, for empty
 // streams, or when the stream is ill-conditioned (non-positive / mixed sign).
@@ -67,8 +81,20 @@ function discountFactor(stream, years, rate) {
   return (isFinite(f) && f > 0 && f <= 1.5) ? f : 1;
 }
 
+// Drug-substance (DS) cost of goods per course by manufacturing arm, at 20,000 L
+// commercial scale (Latham/Sia DS model, July 2026). DS only — drug-product
+// fill/finish and delivery are added separately and are still preliminary.
+const COGS_ARMS = [
+  { id: 'arm2', label: 'Arm 2 · 3-strain (LC-103)', ds: 6.45 },
+  { id: 'arm3', label: 'Arm 3 · 3-strain mucoadhesive', ds: 6.45 },
+  { id: 'arm5', label: 'Arm 5 · 4-strain (LC-104)', ds: 7.74 },
+  { id: 'arm1', label: 'Arm 1 · 6-strain (LC-106)', ds: 16.34 },
+  { id: 'arm4', label: 'Arm 4 · 3-strain reduced dose', ds: 1.29 },
+];
+
 // Color for ICER cell
 function icerCellStyle(icer, wtpThreshold) {
+  if (icer === null || icer === undefined || !isFinite(icer)) return { bg: '#f3f4f6', text: '#6b7280', label: '—' };
   if (icer <= 0)     return { bg: '#dcfce7', text: '#15803d', label: 'Cost savings' };
   if (icer <= wtpThreshold * 0.5) return { bg: '#dbeafe', text: '#1d4ed8', label: fmtDollar(icer) };
   if (icer <= wtpThreshold) return { bg: '#fef9c3', text: '#854d0e', label: fmtDollar(icer) };
@@ -220,8 +246,10 @@ function IcerGrid({ sorted, costPerCourse, wtpThreshold, hivCostRatio, mtzCost, 
             <th className="text-right text-xs font-semibold text-gray-500 pb-2 px-3 font-sans">HSCA</th>
             <th className="text-right text-xs font-semibold text-gray-500 pb-2 px-3 font-sans">Program cost</th>
             <th className="text-center text-xs font-semibold text-gray-500 pb-2 px-3 font-sans">
-              ICER at ${costPerCourse}/course
+              Combined ICER<br /><span className="font-normal text-gray-400">at ${costPerCourse.toFixed(2)}/course</span>
             </th>
+            <th className="text-center text-xs font-semibold text-gray-500 pb-2 px-3 font-sans">HIV-only ICER</th>
+            <th className="text-center text-xs font-semibold text-gray-500 pb-2 px-3 font-sans">PTB-only ICER</th>
           </tr>
         </thead>
         <tbody>
@@ -230,6 +258,10 @@ function IcerGrid({ sorted, costPerCourse, wtpThreshold, hivCostRatio, mtzCost, 
             const icer      = computeIcer(s, costPerCourse, hivCostRatio, mtzOffset);
             const programCost = s.lbp_volume * costPerCourse;
             const style     = icerCellStyle(icer, wtpThreshold);
+            const hivIcer   = indicationIcer(s, costPerCourse, hivCostRatio, 'hiv');
+            const ptbIcer   = indicationIcer(s, costPerCourse, hivCostRatio, 'ptb');
+            const hivStyle  = icerCellStyle(hivIcer, wtpThreshold);
+            const ptbStyle  = icerCellStyle(ptbIcer, wtpThreshold);
             return (
               <tr key={s.id} className="border-t border-gray-100">
                 <td className="py-2 pr-4 text-xs text-gray-700 font-sans whitespace-nowrap">
@@ -254,6 +286,22 @@ function IcerGrid({ sorted, costPerCourse, wtpThreshold, hivCostRatio, mtzCost, 
                     style={{ backgroundColor: style.bg, color: style.text }}
                   >
                     {style.label}
+                  </span>
+                </td>
+                <td className="py-2 px-3 text-center">
+                  <span
+                    className="inline-block rounded px-2 py-0.5 text-xs font-semibold"
+                    style={{ backgroundColor: hivStyle.bg, color: hivStyle.text }}
+                  >
+                    {hivStyle.label}
+                  </span>
+                </td>
+                <td className="py-2 px-3 text-center">
+                  <span
+                    className="inline-block rounded px-2 py-0.5 text-xs font-semibold"
+                    style={{ backgroundColor: ptbStyle.bg, color: ptbStyle.text }}
+                  >
+                    {ptbStyle.label}
                   </span>
                 </td>
               </tr>
@@ -523,7 +571,11 @@ export default function CostEffectiveness() {
     ),
     [scenarios]
   );
-  const [costPerCourse, setCostPerCourse] = useState(20);
+  // Fully-loaded cost per course = DS CoGs (from a manufacturing arm) + everything
+  // else (drug-product fill/finish, delivery, overhead — still preliminary).
+  const [dsCogs, setDsCogs] = useState(6.45);          // Arm 2/3 (3-strain) @ 20kL
+  const [addlCost, setAddlCost] = useState(13.55);     // preliminary; total defaults to $20
+  const costPerCourse = Math.round((dsCogs + addlCost) * 100) / 100;
   const [wtpThreshold, setWtpThreshold]   = useState(3000);
   const defaultHivCost = assumptions.hsca_per_hiv || 11872;
   const [hivCostAverted, setHivCostAverted] = useState(defaultHivCost);
@@ -563,31 +615,64 @@ export default function CostEffectiveness() {
             Incremental cost-effectiveness ratio (ICER)
           </h3>
           <p className="text-xs text-gray-400 font-sans mb-6">
-            Adjust the fully loaded LBP cost per course and your willingness-to-pay threshold to
-            see which scenarios are cost-saving or cost-effective.
+            Fully loaded cost <span className="font-semibold text-brand-teal">${costPerCourse.toFixed(2)}/course</span>
+            {' '}= DS CoGs ${dsCogs.toFixed(2)} + drug product/delivery/overhead ${addlCost.toFixed(2)}.
+            Adjust the inputs below and your willingness-to-pay threshold to see which scenarios are
+            cost-saving or cost-effective.
           </p>
 
           {/* Sliders */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {/* Cost per course slider */}
+            {/* DS CoGs per course (by manufacturing arm) */}
             <div className="bg-brand-grayLight rounded-lg p-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
-                LBP cost per course (fully loaded)
+                DS CoGs per course (by arm)
+              </p>
+              <p className="text-xs text-gray-400 font-sans mb-2">
+                Drug substance only, 20,000 L commercial scale (Latham/Sia, Jul 2026). TPP target ~$6.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {COGS_ARMS.map((a) => {
+                  const active = Math.abs(dsCogs - a.ds) < 0.005;
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => setDsCogs(a.ds)}
+                      className="text-xs font-sans rounded px-2 py-1 border transition-colors"
+                      style={active
+                        ? { backgroundColor: '#0E7490', color: '#fff', borderColor: '#0E7490' }
+                        : { backgroundColor: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
+                    >
+                      {a.label.split(' · ')[0]} ${a.ds}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="bg-brand-teal text-white rounded-lg px-3 py-1 inline-block text-center">
+                <span className="font-serif font-bold text-base">${dsCogs.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Drug product + delivery + overhead */}
+            <div className="bg-brand-grayLight rounded-lg p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+                Drug product + delivery + overhead
               </p>
               <p className="text-xs text-gray-400 font-sans mb-3">
-                Includes procurement, manufacturing, delivery. TPP target: $6/course.
+                Preliminary — DP fill/finish, cold chain, distribution/tariffs, clinic &amp; dispensing.
+                Benchmarks pending.
               </p>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400 w-5">$5</span>
+                <span className="text-xs text-gray-400 w-4">$0</span>
                 <input
-                  type="range" min={5} max={50} step={1}
-                  value={costPerCourse}
-                  onChange={(e) => setCostPerCourse(Number(e.target.value))}
+                  type="range" min={0} max={40} step={0.5}
+                  value={addlCost}
+                  onChange={(e) => setAddlCost(Number(e.target.value))}
                   className="flex-1 accent-brand-teal cursor-pointer"
                 />
-                <span className="text-xs text-gray-400 w-7">$50</span>
+                <span className="text-xs text-gray-400 w-7">$40</span>
                 <div className="bg-brand-teal text-white rounded-lg px-3 py-1 min-w-[56px] text-center">
-                  <span className="font-serif font-bold text-base">${costPerCourse}</span>
+                  <span className="font-serif font-bold text-base">${addlCost.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -621,12 +706,13 @@ export default function CostEffectiveness() {
                 Lifetime cost averted per HIV case
               </p>
               <p className="text-xs text-gray-400 font-sans mb-3">
-                Dominant HSCA lever (HIV ≈ 85–96% of offsets). Default ${Math.round(defaultHivCost).toLocaleString()} (ART + care, 30y).
+                Dominant HSCA lever (HIV ≈ 85–96% of offsets). IPM cost-of-illness range
+                $3,957–$15,601 (update pending); prior point estimate ${Math.round(defaultHivCost).toLocaleString()}.
               </p>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400 w-8">$5k</span>
+                <span className="text-xs text-gray-400 w-8">$3.5k</span>
                 <input
-                  type="range" min={5000} max={18000} step={500}
+                  type="range" min={3500} max={18000} step={250}
                   value={hivCostAverted}
                   onChange={(e) => setHivCostAverted(Number(e.target.value))}
                   className="flex-1 accent-brand-teal cursor-pointer"
