@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,25 +10,8 @@ import {
   Cell,
   ResponsiveContainer,
 } from 'recharts';
-import sensitivityScenarios from '../data/sensitivity_scenarios.json';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function shortenLabel(label) {
-  const map = {
-    'Reference (80%, 12m)': 'Reference',
-    'High Stability (stability=1.0)': 'Low LBP fitness',
-    'Later Introduction (2040)': 'Later intro (2040)',
-    'Asymptomatic Screening (Prenatal)': 'Asymptomatic prenatal screening',
-    'Intermediate LBP (Prenatal + Intermediate)': 'Asymptomatic prenatal screening + LBP for Nugent 4–6',
-    'CST4 Responder Rate 100%': 'LBP effective in MTZ non-responders',
-    'Non-BV VDS = 10%': '−10% non-BV vaginal symptoms',
-    'Non-BV VDS = 30%': '+10% non-BV vaginal symptoms',
-  };
-  return map[label] || label;
-}
+import { useVersion } from '../contexts/VersionContext.jsx';
+import { sensitivityLabel } from '../utils/dataTransforms.js';
 
 // ---------------------------------------------------------------------------
 // Descriptions shown on row label hover
@@ -48,25 +31,24 @@ const descriptions = {
 // Prepare data — exclude reference row
 // ---------------------------------------------------------------------------
 
-const hivBase = sensitivityScenarios
-  .filter((s) => s.id !== 'reference')
-  .map((s) => ({
-    label:       shortenLabel(s.label),
+function buildSensitivityData(sensitivityScenarios) {
+  const filtered = sensitivityScenarios.filter((s) => s.id !== 'reference');
+  const hivData = filtered.map((s) => ({
+    label:       sensitivityLabel(s.label),
     delta:       s.hiv_delta_median,
     delta_p5:    s.hiv_delta_p5,
     delta_p95:   s.hiv_delta_p95,
     pct_change:  s.hiv_pct_change,
   }));
-
-const ptbBase = sensitivityScenarios
-  .filter((s) => s.id !== 'reference')
-  .map((s) => ({
-    label:       shortenLabel(s.label),
+  const ptbData = filtered.map((s) => ({
+    label:       sensitivityLabel(s.label),
     delta:       s.ptb_delta_median,
     delta_p5:    s.ptb_delta_p5,
     delta_p95:   s.ptb_delta_p95,
     pct_change:  s.ptb_pct_change,
   }));
+  return { hivData, ptbData };
+}
 
 // ---------------------------------------------------------------------------
 // Custom Y-axis tick with hover tooltip
@@ -275,7 +257,12 @@ function TornadoPanel({ title, data, showPct }) {
 // ---------------------------------------------------------------------------
 
 export default function SensitivityAnalysis() {
+  const { sensitivityScenarios } = useVersion();
   const [showPct, setShowPct] = useState(false);
+  const { hivData: hivBase, ptbData: ptbBase } = useMemo(
+    () => buildSensitivityData(sensitivityScenarios),
+    [sensitivityScenarios]
+  );
 
   return (
     <section id="sensitivity" className="py-16 bg-white">

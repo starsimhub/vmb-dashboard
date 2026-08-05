@@ -36,6 +36,32 @@ export function efficacyColor(pct) {
 }
 
 /**
+ * Human-friendly display names for sensitivity scenarios, keyed by the raw
+ * label emitted by extract_dashboard_data.py. Shared by the sensitivity
+ * tornados and the cost-effectiveness ICER-driver view.
+ */
+export const SENSITIVITY_LABELS = {
+  'Reference (80%, 12m)': 'Reference',
+  'High Stability (stability=1.0)': 'Low LBP fitness',
+  'Later Introduction (2040)': 'Later intro (2040)',
+  'Asymptomatic Screening (Prenatal)': 'Asymptomatic prenatal screening',
+  'Intermediate LBP (Prenatal + Intermediate)': 'Asymptomatic prenatal screening + LBP for Nugent 4–6',
+  'CST4 Responder Rate 100%': 'LBP effective in MTZ non-responders',
+  'Non-BV VDS = 10%': '−10% non-BV vaginal symptoms',
+  'Non-BV VDS = 30%': '+10% non-BV vaginal symptoms',
+};
+
+/**
+ * Map a raw sensitivity label to its display name (falls back to the raw label).
+ *
+ * @param {string} label
+ * @returns {string}
+ */
+export function sensitivityLabel(label) {
+  return SENSITIVITY_LABELS[label] || label;
+}
+
+/**
  * Filter population scenarios by selected efficacy and duration values.
  * Excludes the baseline (is_baseline = true) scenario.
  *

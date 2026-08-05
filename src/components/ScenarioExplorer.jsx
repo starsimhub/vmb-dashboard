@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import populationScenarios from '../data/population_scenarios.json';
+import { useVersion } from '../contexts/VersionContext.jsx';
 import { formatNumber, efficacyColor, filterPopulationScenarios } from '../utils/dataTransforms.js';
 import { efficacyDescriptions, durationDescriptions } from '../utils/paramDescriptions.js';
 
@@ -228,6 +228,7 @@ function MultiToggle({ label, options, selected, onChange, colorFn }) {
 // ---------------------------------------------------------------------------
 
 export default function ScenarioExplorer() {
+  const { populationScenarios } = useVersion();
   const [selectedEfficacy, setSelectedEfficacy] = useState([50, 65, 80]);
   const [selectedDuration, setSelectedDuration] = useState([6, 12, 18]);
   const [showPct, setShowPct] = useState(false);
@@ -249,7 +250,7 @@ export default function ScenarioExplorer() {
       efficacy: selectedEfficacy,
       duration: selectedDuration,
     }),
-    [selectedEfficacy, selectedDuration]
+    [populationScenarios, selectedEfficacy, selectedDuration]
   );
 
   const chartData = useMemo(() => {
@@ -276,7 +277,7 @@ export default function ScenarioExplorer() {
       }
       return row;
     });
-  }, []);
+  }, [populationScenarios]);
 
   const filteredChartData = useMemo(() => {
     return chartData.map((row) => {

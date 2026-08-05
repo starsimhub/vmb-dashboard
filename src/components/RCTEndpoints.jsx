@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,55 +10,53 @@ import {
   Cell,
   ResponsiveContainer,
 } from 'recharts';
-import rctEndpoints from '../data/rct_endpoints.json';
-import populationScenarios from '../data/population_scenarios.json';
+import { useVersion } from '../contexts/VersionContext.jsx';
 import { efficacyColor } from '../utils/dataTransforms.js';
 import { efficacyDescriptions, durationDescriptions } from '../utils/paramDescriptions.js';
 
 // ---------------------------------------------------------------------------
-// Population impact lookup: keyed by "dur-eff"
-// ---------------------------------------------------------------------------
-
-const popLookup = {};
-for (const s of populationScenarios) {
-  if (!s.is_baseline) {
-    popLookup[`${s.duration_months}-${s.efficacy_pct}`] = {
-      hivPct: s.hiv_pct_median,
-      ptbPct: s.ptb_pct_median,
-    };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Build chart data: header rows + data rows grouped by duration (18 → 12 → 6)
+// Build chart data from versioned context data
 // ---------------------------------------------------------------------------
 
 const durations = [18, 12, 6];
 
-const chartData = [];
-for (const dur of durations) {
-  chartData.push({ name: `${dur}m`, isHeader: true, nugent: null, cst1: null });
-  const rows = rctEndpoints
-    .filter((d) => d.duration_months === dur)
-    .sort((a, b) => b.efficacy_pct - a.efficacy_pct);
-  for (const d of rows) {
-    const pop = popLookup[`${d.duration_months}-${d.efficacy_pct}`] || {};
-    chartData.push({
-      name:       `${dur}m / ${d.efficacy_pct}%`,
-      label:      `${d.efficacy_pct}% efficacy`,
-      isHeader:   false,
-      duration:   d.duration_months,
-      efficacy:   d.efficacy_pct,
-      nugent:     d.nugent_normal_6m_median,
-      nugent_p5:  d.nugent_normal_6m_p5,
-      nugent_p95: d.nugent_normal_6m_p95,
-      cst1:       d.cst1_6m_median,
-      cst1_p5:    d.cst1_6m_p5,
-      cst1_p95:   d.cst1_6m_p95,
-      hivPct:     pop.hivPct,
-      ptbPct:     pop.ptbPct,
-    });
+function buildChartData(rctEndpoints, populationScenarios) {
+  const popLookup = {};
+  for (const s of populationScenarios) {
+    if (!s.is_baseline) {
+      popLookup[`${s.duration_months}-${s.efficacy_pct}`] = {
+        hivPct: s.hiv_pct_median,
+        ptbPct: s.ptb_pct_median,
+      };
+    }
   }
+
+  const data = [];
+  for (const dur of durations) {
+    data.push({ name: `${dur}m`, isHeader: true, nugent: null, cst1: null });
+    const rows = rctEndpoints
+      .filter((d) => d.duration_months === dur)
+      .sort((a, b) => b.efficacy_pct - a.efficacy_pct);
+    for (const d of rows) {
+      const pop = popLookup[`${d.duration_months}-${d.efficacy_pct}`] || {};
+      data.push({
+        name:       `${dur}m / ${d.efficacy_pct}%`,
+        label:      `${d.efficacy_pct}% efficacy`,
+        isHeader:   false,
+        duration:   d.duration_months,
+        efficacy:   d.efficacy_pct,
+        nugent:     d.nugent_normal_6m_median,
+        nugent_p5:  d.nugent_normal_6m_p5,
+        nugent_p95: d.nugent_normal_6m_p95,
+        cst1:       d.cst1_6m_median,
+        cst1_p5:    d.cst1_6m_p5,
+        cst1_p95:   d.cst1_6m_p95,
+        hivPct:     pop.hivPct,
+        ptbPct:     pop.ptbPct,
+      });
+    }
+  }
+  return data;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +65,7 @@ for (const dur of durations) {
 // Shows: small colored dot on efficacy rows indicating HIV impact threshold
 // ---------------------------------------------------------------------------
 
-function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold }) {
+function CustomYAxisTick({ x, y, payload, setLabelTooltip, hivThreshold, chartData }) {
   const entry = chartData.find((d) => d.name === payload.value);
   if (!entry) return null;
 
@@ -138,7 +136,7 @@ function LabelTooltip({ tooltip }) {
 // ---------------------------------------------------------------------------
 
 function DiamondLabel(props) {
-  const { x, y, width, height, value, index } = props;
+  const { x, y, width, height, value, index, chartData } = props;
   const entry = chartData[index];
   if (!entry || entry.isHeader || !entry.cst1 || !value) return null;
   const cx = x + (entry.cst1 / value) * width;
@@ -231,9 +229,15 @@ function CustomLegend({ hivThreshold }) {
 // ---------------------------------------------------------------------------
 
 export default function RCTEndpoints() {
+  const { rctEndpoints, populationScenarios } = useVersion();
   const [tppThreshold, setTppThreshold] = useState(70);
   const [hivThreshold, setHivThreshold] = useState(5);
   const [labelTooltip, setLabelTooltip] = useState(null);
+
+  const chartData = useMemo(
+    () => buildChartData(rctEndpoints, populationScenarios),
+    [rctEndpoints, populationScenarios]
+  );
 
   return (
     <section id="rct" className="py-16 bg-brand-grayLight">
@@ -340,7 +344,7 @@ export default function RCTEndpoints() {
               <YAxis
                 type="category"
                 dataKey="name"
-                tick={<CustomYAxisTick setLabelTooltip={setLabelTooltip} hivThreshold={hivThreshold} />}
+                tick={<CustomYAxisTick setLabelTooltip={setLabelTooltip} hivThreshold={hivThreshold} chartData={chartData} />}
                 axisLine={false}
                 tickLine={false}
                 width={125}
@@ -363,7 +367,7 @@ export default function RCTEndpoints() {
               />
 
               <Bar dataKey="nugent" name="Nugent 0–3 at 6m" barSize={16} opacity={0.85}
-                label={<DiamondLabel />}>
+                label={<DiamondLabel chartData={chartData} />}>
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
