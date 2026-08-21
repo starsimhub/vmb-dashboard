@@ -50,6 +50,7 @@ export const SENSITIVITY_LABELS = {
   'Non-BV VDS = 10%': '−10% non-BV vaginal symptoms',
   'Non-BV VDS = 30%': '+10% non-BV vaginal symptoms',
   'Permanent engraftment (12m threshold)': 'Permanent engraftment (12m)',
+  'No permanent engraftment (120m threshold)': 'No permanent engraftment',
 };
 
 /**
