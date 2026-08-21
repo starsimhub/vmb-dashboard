@@ -6,6 +6,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  ErrorBar,
   ResponsiveContainer,
 } from 'recharts';
 import { useVersion } from '../contexts/VersionContext.jsx';
@@ -284,20 +285,30 @@ export default function ScenarioExplorer() {
       const newRow  = { duration: row.duration };
       const durNum  = parseInt(row.duration, 10);
       const durActive = selectedDuration.includes(durNum);
+      // [below, above] offsets from the median to p5/p95 for Recharts ErrorBar.
+      const errOffset = (med, p5, p95) => {
+        if (med === null || med === undefined || p5 === undefined || p95 === undefined) return null;
+        const lo = Math.min(p5, p95), hi = Math.max(p5, p95);
+        return [Math.max(0, med - lo), Math.max(0, hi - med)];
+      };
       for (const eff of [50, 65, 80]) {
         const effActive = selectedEfficacy.includes(eff) && durActive;
         newRow[`hiv_${eff}`]        = effActive ? row[`hiv_${eff}`] : null;
         newRow[`hiv_${eff}_p5`]     = row[`hiv_${eff}_p5`];
         newRow[`hiv_${eff}_p95`]    = row[`hiv_${eff}_p95`];
+        newRow[`hiv_${eff}_err`]    = effActive ? errOffset(row[`hiv_${eff}`], row[`hiv_${eff}_p5`], row[`hiv_${eff}_p95`]) : null;
         newRow[`ptb_${eff}`]        = effActive ? row[`ptb_${eff}`] : null;
         newRow[`ptb_${eff}_p5`]     = row[`ptb_${eff}_p5`];
         newRow[`ptb_${eff}_p95`]    = row[`ptb_${eff}_p95`];
+        newRow[`ptb_${eff}_err`]    = effActive ? errOffset(row[`ptb_${eff}`], row[`ptb_${eff}_p5`], row[`ptb_${eff}_p95`]) : null;
         newRow[`hivpct_${eff}`]     = effActive ? row[`hivpct_${eff}`] : null;
         newRow[`hivpct_${eff}_p5`]  = row[`hivpct_${eff}_p5`];
         newRow[`hivpct_${eff}_p95`] = row[`hivpct_${eff}_p95`];
+        newRow[`hivpct_${eff}_err`] = effActive ? errOffset(row[`hivpct_${eff}`], row[`hivpct_${eff}_p5`], row[`hivpct_${eff}_p95`]) : null;
         newRow[`ptbpct_${eff}`]     = effActive ? row[`ptbpct_${eff}`] : null;
         newRow[`ptbpct_${eff}_p5`]  = row[`ptbpct_${eff}_p5`];
         newRow[`ptbpct_${eff}_p95`] = row[`ptbpct_${eff}_p95`];
+        newRow[`ptbpct_${eff}_err`] = effActive ? errOffset(row[`ptbpct_${eff}`], row[`ptbpct_${eff}_p5`], row[`ptbpct_${eff}_p95`]) : null;
       }
       return newRow;
     });
@@ -327,8 +338,8 @@ export default function ScenarioExplorer() {
           <h2 className="section-heading">Scenario explorer</h2>
           <p className="section-subheading max-w-2xl">
             Explore projected population-level outcomes for LBP interventions across efficacy levels
-            and protection durations, 2035–2050. Hover over axis labels and legend items for
-            parameter definitions.
+            and protection durations, 2035–2050. Whiskers show 95% uncertainty intervals across model
+            seeds. Hover over axis labels and legend items for parameter definitions.
           </p>
         </div>
 
@@ -441,9 +452,15 @@ export default function ScenarioExplorer() {
                   width={36}
                 />
                 <Tooltip content={<CustomTooltip showPct={showPct} />} />
-                <Bar dataKey={`${hivKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} />
-                <Bar dataKey={`${hivKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} />
-                <Bar dataKey={`${hivKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} />
+                <Bar dataKey={`${hivKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${hivKey}_80_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
+                <Bar dataKey={`${hivKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${hivKey}_65_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
+                <Bar dataKey={`${hivKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${hivKey}_50_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
             <EfficacyLegend
@@ -495,9 +512,15 @@ export default function ScenarioExplorer() {
                   width={36}
                 />
                 <Tooltip content={<CustomTooltip showPct={showPct} />} />
-                <Bar dataKey={`${ptbKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} />
-                <Bar dataKey={`${ptbKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} />
-                <Bar dataKey={`${ptbKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} />
+                <Bar dataKey={`${ptbKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${ptbKey}_80_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
+                <Bar dataKey={`${ptbKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${ptbKey}_65_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
+                <Bar dataKey={`${ptbKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${ptbKey}_50_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
             <EfficacyLegend

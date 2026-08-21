@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import VersionSelector from './VersionSelector.jsx';
+import { useVersion } from '../contexts/VersionContext.jsx';
 
 const NAV_LINKS = [
   { label: 'Overview',     href: '#overview' },
@@ -12,8 +13,15 @@ const NAV_LINKS = [
 ];
 
 export default function Header() {
+  const { versionInfo } = useVersion();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Some versions hide the cost-effectiveness section (e.g. when its CEA
+  // inputs are stale and pending refresh); drop the nav link to match.
+  const navLinks = versionInfo?.hide_cea
+    ? NAV_LINKS.filter((l) => l.href !== '#ce')
+    : NAV_LINKS;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,7 +57,7 @@ export default function Header() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -86,7 +94,7 @@ export default function Header() {
         {/* Mobile nav dropdown */}
         {menuOpen && (
           <nav className="md:hidden border-t border-gray-100 py-3">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
