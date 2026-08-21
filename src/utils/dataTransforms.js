@@ -49,6 +49,7 @@ export const SENSITIVITY_LABELS = {
   'CST4 Responder Rate 100%': 'LBP effective in MTZ non-responders',
   'Non-BV VDS = 10%': '−10% non-BV vaginal symptoms',
   'Non-BV VDS = 30%': '+10% non-BV vaginal symptoms',
+  'Permanent engraftment (12m threshold)': 'Permanent engraftment (12m)',
 };
 
 /**

@@ -1,5 +1,5 @@
 import React from 'react';
-import { VersionProvider } from './contexts/VersionContext.jsx';
+import { VersionProvider, useVersion } from './contexts/VersionContext.jsx';
 import Header from './components/Header.jsx';
 import Overview from './components/Overview.jsx';
 import ScenarioExplorer from './components/ScenarioExplorer.jsx';
@@ -10,37 +10,54 @@ import CostEffectiveness from './components/CostEffectiveness.jsx';
 import Methods from './components/Methods.jsx';
 import Footer from './components/Footer.jsx';
 
+const Separator = ({ via }) => (
+  <div className={`h-px bg-gradient-to-r from-transparent ${via} to-transparent opacity-20`} />
+);
+
+function MainContent() {
+  const { versionInfo } = useVersion();
+  // Some versions omit the cost-effectiveness section (e.g. when its CEA inputs
+  // are stale and pending a full refresh).
+  const showCea = !versionInfo?.hide_cea;
+
+  return (
+    <main className="flex-1">
+      <Overview />
+
+      <div className="h-px bg-gradient-to-r from-transparent via-brand-teal to-transparent opacity-30" />
+
+      <RCTEndpoints />
+
+      <Separator via="via-brand-blue" />
+
+      <ScenarioExplorer />
+
+      <Separator via="via-brand-blue" />
+
+      <SensitivityAnalysis />
+
+      {showCea && (
+        <>
+          <Separator via="via-brand-teal" />
+          <CostEffectiveness />
+        </>
+      )}
+
+      <Separator via="via-brand-blue" />
+
+      <KeyFindings />
+
+      <Methods />
+    </main>
+  );
+}
+
 export default function App() {
   return (
     <VersionProvider>
     <div className="min-h-screen flex flex-col font-sans">
       <Header />
-      <main className="flex-1">
-        <Overview />
-
-        {/* Visual separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-brand-teal to-transparent opacity-30" />
-
-        <RCTEndpoints />
-
-        <div className="h-px bg-gradient-to-r from-transparent via-brand-blue to-transparent opacity-20" />
-
-        <ScenarioExplorer />
-
-        <div className="h-px bg-gradient-to-r from-transparent via-brand-blue to-transparent opacity-20" />
-
-        <SensitivityAnalysis />
-
-        <div className="h-px bg-gradient-to-r from-transparent via-brand-teal to-transparent opacity-20" />
-
-        <CostEffectiveness />
-
-        <div className="h-px bg-gradient-to-r from-transparent via-brand-blue to-transparent opacity-20" />
-
-        <KeyFindings />
-
-        <Methods />
-      </main>
+      <MainContent />
       <Footer />
     </div>
     </VersionProvider>

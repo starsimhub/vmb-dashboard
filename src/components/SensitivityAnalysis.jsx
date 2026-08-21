@@ -8,6 +8,7 @@ import {
   Tooltip,
   ReferenceLine,
   Cell,
+  ErrorBar,
   ResponsiveContainer,
 } from 'recharts';
 import { useVersion } from '../contexts/VersionContext.jsx';
@@ -25,11 +26,26 @@ const descriptions = {
   'LBP effective in MTZ non-responders': 'Allows LBP to colonize and establish CST I even in women who fail to clear BV with metronidazole, decoupling LBP efficacy from antibiotic response.',
   '−10% non-BV vaginal symptoms': 'Varies the rate at which women present with vaginal symptoms unrelated to BV (e.g., yeast infections, irritation), which affects how often BV is incidentally detected and treated through symptom-driven care-seeking.',
   '+10% non-BV vaginal symptoms': 'Varies the rate at which women present with vaginal symptoms unrelated to BV (e.g., yeast infections, irritation), which affects how often BV is incidentally detected and treated through symptom-driven care-seeking.',
+  'Permanent engraftment (12m)': 'Optimistic assumption (the prior base case): once an LBP effect is sustained ≥12 months, CST I is treated as permanently established (never reverts). The reference here assumes no permanence, so this bar shows how much the permanence assumption would inflate impact — especially HIV, which depends heavily on durability.',
 };
 
 // ---------------------------------------------------------------------------
 // Prepare data — exclude reference row
 // ---------------------------------------------------------------------------
+
+// Error-bar offsets for Recharts ErrorBar: a [below, above] tuple giving the
+// distance from the median down to p5 and up to p95 (the 95% uncertainty
+// interval). Also flag whether that interval crosses zero (not distinguishable
+// from the reference).
+function ciFields(median, p5, p95) {
+  const lo = Math.min(p5, p95), hi = Math.max(p5, p95);
+  return {
+    error: [Math.max(0, median - lo), Math.max(0, hi - median)],
+    ci_lo: lo,
+    ci_hi: hi,
+    crossesZero: lo <= 0 && hi >= 0,
+  };
+}
 
 function buildSensitivityData(sensitivityScenarios) {
   const filtered = sensitivityScenarios.filter((s) => s.id !== 'reference');
@@ -39,6 +55,7 @@ function buildSensitivityData(sensitivityScenarios) {
     delta_p5:    s.hiv_delta_p5,
     delta_p95:   s.hiv_delta_p95,
     pct_change:  s.hiv_pct_change,
+    ...ciFields(s.hiv_delta_median, s.hiv_delta_p5, s.hiv_delta_p95),
   }));
   const ptbData = filtered.map((s) => ({
     label:       sensitivityLabel(s.label),
@@ -46,6 +63,7 @@ function buildSensitivityData(sensitivityScenarios) {
     delta_p5:    s.ptb_delta_p5,
     delta_p95:   s.ptb_delta_p95,
     pct_change:  s.ptb_pct_change,
+    ...ciFields(s.ptb_delta_median, s.ptb_delta_p5, s.ptb_delta_p95),
   }));
   return { hivData, ptbData };
 }
@@ -148,9 +166,14 @@ function CustomTooltip({ active, payload, showPct }) {
         </span>
       </p>
       {!showPct && (
-        <p className="text-xs text-gray-500">
-          95% UI: {Math.round(d.delta_p5).toLocaleString()} to {Math.round(d.delta_p95).toLocaleString()}
-        </p>
+        <>
+          <p className="text-xs text-gray-500">
+            95% UI: {Math.round(d.delta_p5).toLocaleString()} to {Math.round(d.delta_p95).toLocaleString()}
+          </p>
+          <p className="text-xs font-medium mt-0.5" style={{ color: d.crossesZero ? '#b45309' : '#15803d' }}>
+            {d.crossesZero ? 'Not distinguishable from reference (95% UI crosses 0)' : 'Distinguishable from reference'}
+          </p>
+        </>
       )}
       {showPct && (
         <p className="text-xs text-gray-500">
@@ -222,7 +245,7 @@ function TornadoPanel({ title, data, showPct }) {
           />
           <Tooltip content={<CustomTooltip showPct={showPct} />} />
           <ReferenceLine x={0} stroke="#9CA3AF" strokeWidth={1.5} />
-          <Bar dataKey={showPct ? 'pct_change' : 'delta'} barSize={16}>
+          <Bar dataKey={showPct ? 'pct_change' : 'delta'} barSize={16} isAnimationActive={false}>
             {sortedData.map((entry, index) => {
               const v = showPct ? entry.pct_change : entry.delta;
               return (
@@ -233,11 +256,20 @@ function TornadoPanel({ title, data, showPct }) {
                 />
               );
             })}
+            {!showPct && (
+              <ErrorBar
+                dataKey="error"
+                direction="x"
+                width={5}
+                strokeWidth={1.3}
+                stroke="#4B5563"
+              />
+            )}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-2 text-xs font-sans">
+      <div className="flex flex-wrap items-center gap-4 mt-2 text-xs font-sans">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#16a34a', opacity: 0.85 }} />
           <span className="text-gray-500">More impact than reference</span>
@@ -246,6 +278,12 @@ function TornadoPanel({ title, data, showPct }) {
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#dc2626', opacity: 0.85 }} />
           <span className="text-gray-500">Less impact than reference</span>
         </div>
+        {!showPct && (
+          <div className="flex items-center gap-1.5">
+            <svg width="18" height="10"><line x1="2" y1="5" x2="16" y2="5" stroke="#4B5563" strokeWidth="1.3" /><line x1="2" y1="1" x2="2" y2="9" stroke="#4B5563" strokeWidth="1.3" /><line x1="16" y1="1" x2="16" y2="9" stroke="#4B5563" strokeWidth="1.3" /></svg>
+            <span className="text-gray-500">95% uncertainty interval — bars whose interval crosses 0 aren&rsquo;t distinguishable from the reference</span>
+          </div>
+        )}
       </div>
       <LabelTooltip tooltip={labelTooltip} />
     </div>
