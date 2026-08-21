@@ -27,6 +27,7 @@ const descriptions = {
   '−10% non-BV vaginal symptoms': 'Varies the rate at which women present with vaginal symptoms unrelated to BV (e.g., yeast infections, irritation), which affects how often BV is incidentally detected and treated through symptom-driven care-seeking.',
   '+10% non-BV vaginal symptoms': 'Varies the rate at which women present with vaginal symptoms unrelated to BV (e.g., yeast infections, irritation), which affects how often BV is incidentally detected and treated through symptom-driven care-seeking.',
   'Permanent engraftment (12m)': 'Optimistic assumption (the prior base case): once an LBP effect is sustained ≥12 months, CST I is treated as permanently established (never reverts). The reference here assumes no permanence, so this bar shows how much the permanence assumption would inflate impact — especially HIV, which depends heavily on durability.',
+  'No permanent engraftment': 'Removes the permanence assumption used in this version’s base case: instead of a sustained (≥12m) LBP effect establishing CST I for life, engraftment lasts its drawn duration and then reverts. Shows how much of the base-case impact — especially HIV — depends on assuming permanent establishment.',
 };
 
 // ---------------------------------------------------------------------------
