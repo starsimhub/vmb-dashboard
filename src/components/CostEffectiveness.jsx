@@ -546,8 +546,9 @@ function AssumptionsCard({ assumptions }) {
 // ---------------------------------------------------------------------------
 
 export default function CostEffectiveness() {
-  const { ceData, sensitivityScenarios, populationScenarios } = useVersion();
+  const { ceData, sensitivityScenarios, populationScenarios, versionInfo } = useVersion();
   const { assumptions, scenarios } = ceData;
+  const ceaInterim = Boolean(versionInfo?.cea_interim);
   const popMtzById = useMemo(
     () => Object.fromEntries((populationScenarios || []).map((p) => [p.id, p.mtz_averted_median || 0])),
     [populationScenarios]
@@ -582,9 +583,19 @@ export default function CostEffectiveness() {
           <h2 className="section-heading">DALYs averted &amp; cost-effectiveness</h2>
           <p className="section-subheading max-w-2xl">
             DALYs averted, health system costs averted, and incremental cost-effectiveness ratios
-            (ICERs) across the 9 product scenarios. Results are from a parallel Gates Foundation
-            analysis spanning 2026–2050 in South Africa.
+            (ICERs) across the 9 product scenarios, 2035–2050, South Africa.
+            {ceaInterim
+              ? ' This is an interim IDM estimate for the no-permanence scenario, pending IPM validation.'
+              : ' Results are from a parallel Gates Foundation / IPM analysis.'}
           </p>
+          {ceaInterim && (
+            <div className="mt-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 max-w-3xl">
+              <span className="font-semibold">Interim IDM estimate.</span> This cost-effectiveness view
+              uses IDM&rsquo;s own DALY attribution and costing for the no-permanent-engraftment scenario
+              (flat 15 / 2.74 DALYs; age-specific HSCA ≈ adult; undiscounted). It is a cross-check pending
+              IPM&rsquo;s authoritative DALY-attribution and costing refresh — treat absolute ICERs as provisional.
+            </div>
+          )}
         </div>
 
         <AssumptionsCard assumptions={assumptions} />
