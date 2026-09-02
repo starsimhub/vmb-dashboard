@@ -4,7 +4,7 @@
     "label": "Aug 2026 \u00b7 no permanent engraftment",
     "date": "2026-08-21",
     "description": "Durability revision: no permanent CST I engraftment (drawn-duration then graceful decay); more conservative HIV impact",
-    "default": false,
+    "default": true,
     "cea_interim": true
   },
   {
@@ -12,7 +12,7 @@
     "label": "July 2026 ICER drivers",
     "date": "2026-07-16",
     "description": "Adds LBP treatment volumes to sensitivity scenarios for ICER driver analysis",
-    "default": true
+    "default": false
   },
   {
     "id": "march-2026-review",
