@@ -23,7 +23,8 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 0,
-    "mtz_averted_median": 0
+    "mtz_averted_median": 0,
+    "baseline_bv_median": 127800666
   },
   {
     "id": "eff50_dur6m",
@@ -49,7 +50,11 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 20311199,
-    "mtz_averted_median": 528479
+    "mtz_averted_median": 528479,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 3.6,
+    "bv_pct_p5": 3.5,
+    "bv_pct_p95": 3.7
   },
   {
     "id": "eff50_dur12m",
@@ -75,7 +80,11 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 19306192,
-    "mtz_averted_median": 1569546
+    "mtz_averted_median": 1569546,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 12.3,
+    "bv_pct_p5": 12.1,
+    "bv_pct_p95": 12.5
   },
   {
     "id": "eff50_dur18m",
@@ -101,7 +110,11 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 18195449,
-    "mtz_averted_median": 2678660
+    "mtz_averted_median": 2678660,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 21.4,
+    "bv_pct_p5": 21.2,
+    "bv_pct_p95": 21.6
   },
   {
     "id": "eff65_dur6m",
@@ -127,7 +140,11 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 20187534,
-    "mtz_averted_median": 645828
+    "mtz_averted_median": 645828,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 4.4,
+    "bv_pct_p5": 4.2,
+    "bv_pct_p95": 4.5
   },
   {
     "id": "eff65_dur12m",
@@ -153,7 +170,11 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 18963313,
-    "mtz_averted_median": 1899795
+    "mtz_averted_median": 1899795,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 14.9,
+    "bv_pct_p5": 14.7,
+    "bv_pct_p95": 15.1
   },
   {
     "id": "eff65_dur18m",
@@ -179,7 +200,11 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 17679602,
-    "mtz_averted_median": 3212639
+    "mtz_averted_median": 3212639,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 25.6,
+    "bv_pct_p5": 25.3,
+    "bv_pct_p95": 25.8
   },
   {
     "id": "eff80_dur6m",
@@ -205,7 +230,11 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 20065295,
-    "mtz_averted_median": 775401
+    "mtz_averted_median": 775401,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 5.2,
+    "bv_pct_p5": 5.0,
+    "bv_pct_p95": 5.3
   },
   {
     "id": "eff80_dur12m",
@@ -231,7 +260,11 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 18650993,
-    "mtz_averted_median": 2229839
+    "mtz_averted_median": 2229839,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 17.3,
+    "bv_pct_p5": 17.2,
+    "bv_pct_p95": 17.5
   },
   {
     "id": "eff80_dur18m",
@@ -257,6 +290,10 @@
     "baseline_hiv_median": 2743854,
     "baseline_ptb_median": 2312147,
     "lbp_treatments_median": 17215705,
-    "mtz_averted_median": 3687945
+    "mtz_averted_median": 3687945,
+    "baseline_bv_median": 127800666,
+    "bv_pct_median": 29.3,
+    "bv_pct_p5": 29.1,
+    "bv_pct_p95": 29.4
   }
 ]

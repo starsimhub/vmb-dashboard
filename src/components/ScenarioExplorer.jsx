@@ -133,7 +133,7 @@ function CustomTooltip({ active, payload, label, showPct }) {
 // Summary cards
 // ---------------------------------------------------------------------------
 
-function SummaryCard({ title, subtitle, hiv, ptb, period }) {
+function SummaryCard({ title, subtitle, hiv, ptb, bv, period }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <p className="text-xs font-semibold uppercase tracking-widest text-brand-teal mb-1">
@@ -156,12 +156,20 @@ function SummaryCard({ title, subtitle, hiv, ptb, period }) {
             <span className="text-xs text-gray-500 font-sans ml-1">preterm births averted</span>
           </div>
         )}
+        {bv !== undefined && (
+          <div>
+            <span className="font-serif font-bold text-xl text-brand-gold">
+              {fmtComma(bv)}
+            </span>
+            <span className="text-xs text-gray-500 font-sans ml-1">BV cases averted</span>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function BaselineCard({ baselineHiv, baselinePtb }) {
+function BaselineCard({ baselineHiv, baselinePtb, baselineBv }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
@@ -181,6 +189,14 @@ function BaselineCard({ baselineHiv, baselinePtb }) {
           </span>
           <span className="text-xs text-gray-500 font-sans ml-1">preterm births</span>
         </div>
+        {baselineBv !== undefined && (
+          <div>
+            <span className="font-serif font-bold text-xl text-gray-700">
+              {fmtComma(baselineBv)}
+            </span>
+            <span className="text-xs text-gray-500 font-sans ml-1">BV cases</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -238,6 +254,7 @@ export default function ScenarioExplorer() {
   const baseline    = populationScenarios.find((s) => s.is_baseline);
   const baselineHiv = baseline?.baseline_hiv_median;
   const baselinePtb = baseline?.baseline_ptb_median;
+  const baselineBv  = baseline?.baseline_bv_median;
 
   const best = populationScenarios.find(
     (s) => s.efficacy_pct === 80 && s.duration_months === 18
@@ -274,6 +291,12 @@ export default function ScenarioExplorer() {
           row[`ptbpct_${eff}`]     = s.ptb_pct_median;
           row[`ptbpct_${eff}_p5`]  = s.ptb_pct_p5;
           row[`ptbpct_${eff}_p95`] = s.ptb_pct_p95;
+          row[`bv_${eff}`]         = s.bv_averted_median;
+          row[`bv_${eff}_p5`]      = s.bv_averted_p5;
+          row[`bv_${eff}_p95`]     = s.bv_averted_p95;
+          row[`bvpct_${eff}`]      = s.bv_pct_median;
+          row[`bvpct_${eff}_p5`]   = s.bv_pct_p5;
+          row[`bvpct_${eff}_p95`]  = s.bv_pct_p95;
         }
       }
       return row;
@@ -309,6 +332,14 @@ export default function ScenarioExplorer() {
         newRow[`ptbpct_${eff}_p5`]  = row[`ptbpct_${eff}_p5`];
         newRow[`ptbpct_${eff}_p95`] = row[`ptbpct_${eff}_p95`];
         newRow[`ptbpct_${eff}_err`] = effActive ? errOffset(row[`ptbpct_${eff}`], row[`ptbpct_${eff}_p5`], row[`ptbpct_${eff}_p95`]) : null;
+        newRow[`bv_${eff}`]         = effActive ? row[`bv_${eff}`] : null;
+        newRow[`bv_${eff}_p5`]      = row[`bv_${eff}_p5`];
+        newRow[`bv_${eff}_p95`]     = row[`bv_${eff}_p95`];
+        newRow[`bv_${eff}_err`]     = effActive ? errOffset(row[`bv_${eff}`], row[`bv_${eff}_p5`], row[`bv_${eff}_p95`]) : null;
+        newRow[`bvpct_${eff}`]      = effActive ? row[`bvpct_${eff}`] : null;
+        newRow[`bvpct_${eff}_p5`]   = row[`bvpct_${eff}_p5`];
+        newRow[`bvpct_${eff}_p95`]  = row[`bvpct_${eff}_p95`];
+        newRow[`bvpct_${eff}_err`]  = effActive ? errOffset(row[`bvpct_${eff}`], row[`bvpct_${eff}_p5`], row[`bvpct_${eff}_p95`]) : null;
       }
       return newRow;
     });
@@ -316,8 +347,12 @@ export default function ScenarioExplorer() {
 
   const hivKey  = showPct ? 'hivpct' : 'hiv';
   const ptbKey  = showPct ? 'ptbpct' : 'ptb';
+  const bvKey   = showPct ? 'bvpct' : 'bv';
   const xMaxHiv = showPct ? 15 : 310000;
   const xMaxPtb = showPct ? 15 : 310000;
+  // BV counts/percentages are far larger than HIV/PTB and differ by version,
+  // so let this axis auto-scale to the data rather than using a fixed domain.
+  const xMaxBv  = 'dataMax';
 
   // Shared legend content for both charts
   const legendContent = ({ payload }) => (
@@ -394,12 +429,13 @@ export default function ScenarioExplorer() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <BaselineCard baselineHiv={baselineHiv} baselinePtb={baselinePtb} />
+          <BaselineCard baselineHiv={baselineHiv} baselinePtb={baselinePtb} baselineBv={baselineBv} />
           <SummaryCard
             title="Best case"
             subtitle="80% efficacy, 18-month duration"
             hiv={best?.hiv_averted_median}
             ptb={best?.ptb_averted_median}
+            bv={best?.bv_averted_median}
             period="2035–2050"
           />
           <SummaryCard
@@ -407,12 +443,13 @@ export default function ScenarioExplorer() {
             subtitle="80% efficacy, 12-month duration"
             hiv={reference?.hiv_averted_median}
             ptb={reference?.ptb_averted_median}
+            bv={reference?.bv_averted_median}
             period="2035–2050"
           />
         </div>
 
         {/* Charts side by side */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* HIV chart */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-serif font-semibold text-brand-blue text-base mb-1">
@@ -520,6 +557,66 @@ export default function ScenarioExplorer() {
                 </Bar>
                 <Bar dataKey={`${ptbKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} isAnimationActive={false}>
                   <ErrorBar dataKey={`${ptbKey}_50_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <EfficacyLegend
+              payload={[
+                { value: '80% efficacy', color: efficacyColor(80) },
+                { value: '65% efficacy', color: efficacyColor(65) },
+                { value: '50% efficacy', color: efficacyColor(50) },
+              ]}
+              setLabelTooltip={setLabelTooltip}
+            />
+          </div>
+
+          {/* BV chart */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 className="font-serif font-semibold text-brand-blue text-base mb-1">
+              BV cases averted (2035–2050)
+            </h3>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart
+                data={filteredChartData}
+                layout="vertical"
+                margin={{ top: 8, right: 24, left: 8, bottom: 24 }}
+                barCategoryGap="30%"
+                barGap={2}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
+                <XAxis
+                  type="number"
+                  domain={[0, xMaxBv]}
+                  tickFormatter={showPct ? (v) => `${v}%` : (v) => formatNumber(v, 1)}
+                  tick={{ fontSize: 13, fontFamily: 'IBM Plex Sans', fill: '#9CA3AF' }}
+                  axisLine={false}
+                  tickLine={false}
+                  label={{
+                    value: showPct ? '% of BV cases averted' : 'BV cases averted',
+                    position: 'insideBottom',
+                    offset: -14,
+                    fontSize: 13,
+                    fontFamily: 'IBM Plex Sans',
+                    fill: '#6B7280',
+                  }}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="duration"
+                  tick={durationTick}
+                  axisLine={false}
+                  tickLine={false}
+                  width={36}
+                />
+                <Tooltip content={<CustomTooltip showPct={showPct} />} />
+                <Bar dataKey={`${bvKey}_80`} name="80% efficacy" fill={efficacyColor(80)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${bvKey}_80_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
+                <Bar dataKey={`${bvKey}_65`} name="65% efficacy" fill={efficacyColor(65)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${bvKey}_65_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
+                </Bar>
+                <Bar dataKey={`${bvKey}_50`} name="50% efficacy" fill={efficacyColor(50)} barSize={12} isAnimationActive={false}>
+                  <ErrorBar dataKey={`${bvKey}_50_err`} direction="x" width={3} strokeWidth={1} stroke="#6B7280" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
