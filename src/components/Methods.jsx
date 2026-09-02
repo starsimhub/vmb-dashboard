@@ -8,7 +8,7 @@ const ACCORDION_SECTIONS = [
       <div className="space-y-5 text-sm text-gray-600 font-sans leading-relaxed">
         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
           Source: Gates Foundation / IPM cost-effectiveness analysis, March 2026 (preliminary).
-          Analysis period 2026–2050, South Africa only.
+          Analysis period 2035–2050, South Africa only.
         </p>
 
         {/* HIV */}

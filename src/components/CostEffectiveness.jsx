@@ -138,7 +138,7 @@ function DalysChart({ sorted }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <h3 className="font-serif font-semibold text-brand-blue text-base mb-1">
-        DALYs averted (2026–2050)
+        DALYs averted (2035–2050)
       </h3>
       <p className="text-xs text-gray-400 font-sans mb-4">
         15 DALYs/HIV infection averted · 2.74 DALYs/preterm birth averted (GBD 2023, South Africa)
@@ -190,7 +190,7 @@ function HscaChart({ sorted, hivCostRatio, hivCostAverted }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <h3 className="font-serif font-semibold text-brand-blue text-base mb-1">
-        Health system costs averted (2026–2050)
+        Health system costs averted (2035–2050)
       </h3>
       <p className="text-xs text-gray-400 font-sans mb-4">
         ${Math.round(hivCostAverted).toLocaleString()}/HIV infection averted · $448/preterm birth averted (South Africa, preliminary)
