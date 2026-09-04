@@ -546,18 +546,36 @@ function AssumptionsCard({ assumptions }) {
 // ---------------------------------------------------------------------------
 
 export default function CostEffectiveness() {
-  const { ceData, sensitivityScenarios, populationScenarios, versionInfo } = useVersion();
+  const { ceData, sensitivityScenarios, populationScenarios, versionInfo,
+          centralStat, setCentralStat } = useVersion();
   const { assumptions, scenarios } = ceData;
   const ceaInterim = Boolean(versionInfo?.cea_interim);
+  // Versions that carry per-seed mean+median CE values (e.g. Sep IPM draft) can
+  // switch the whole CEA between the median and the mean via the shared toggle.
+  const hasMeanCe = useMemo(() => scenarios.some((s) => s.dalys_averted_median != null), [scenarios]);
+  const statCe = hasMeanCe ? centralStat : 'median';
   const popMtzById = useMemo(
     () => Object.fromEntries((populationScenarios || []).map((p) => [p.id, p.mtz_averted_median || 0])),
     [populationScenarios]
   );
+  // Resolve each scenario's headline figures to the selected central estimate.
+  const resolved = useMemo(() => scenarios.map((s) => {
+    const pick = (base) => statCe === 'mean'
+      ? (s[base] ?? s[`${base}_mean`])
+      : (s[`${base}_median`] ?? s[base]);
+    return {
+      ...s,
+      dalys_averted: pick('dalys_averted'), hsca: pick('hsca'), lbp_volume: pick('lbp_volume'),
+      hiv_averted: pick('hiv_averted'), ptb_averted: pick('ptb_averted'),
+      hiv_daly_pct: pick('hiv_daly_pct'), ptb_daly_pct: pick('ptb_daly_pct'),
+      hiv_hsca_pct: pick('hiv_hsca_pct'), ptb_hsca_pct: pick('ptb_hsca_pct'),
+    };
+  }), [scenarios, statCe]);
   const sorted = useMemo(
-    () => [...scenarios].sort(
+    () => [...resolved].sort(
       (a, b) => b.duration_months - a.duration_months || a.efficacy_pct - b.efficacy_pct
     ),
-    [scenarios]
+    [resolved]
   );
   // Versions that carry IPM's channel costing (procurement COGS + OTC/Rx delivery)
   // use a simplified cost panel matching IPM's assumptions.
@@ -569,8 +587,8 @@ export default function CostEffectiveness() {
   // drug-product/delivery/overhead. Channel panel = procurement COGS + OTC/Rx delivery.
   const [dsCogs, setDsCogs] = useState(6.45);          // Arm 2/3 (3-strain) @ 20kL
   const [addlCost, setAddlCost] = useState(13.55);     // preliminary; total defaults to $20
-  const [cogsIdx, setCogsIdx] = useState(0);
-  const [channel, setChannel] = useState('otc');
+  const [cogsIdx, setCogsIdx] = useState(0);       // $4.24 procurement (first point)
+  const [channel, setChannel] = useState('rx');    // facility/prescriber delivery
   const cogs = cogsPoints[cogsIdx] ?? cogsPoints[0] ?? 6.45;
   const deliveryCost = channels ? (channel === 'otc' ? channels.otc : channels.rx) : 0;
   const costPerCourse = channelMode
@@ -600,21 +618,46 @@ export default function CostEffectiveness() {
           <h2 className="section-heading">DALYs averted &amp; cost-effectiveness</h2>
           <p className="section-subheading max-w-2xl">
             DALYs averted, health system costs averted, and incremental cost-effectiveness ratios
-            (ICERs) across the 9 product scenarios, 2035–2050, South Africa.
-            {ceaInterim
-              ? ' These cost-effectiveness inputs are preliminary and pending IPM validation.'
-              : ' Results are from a parallel Gates Foundation / IPM analysis.'}
+            (ICERs) across the 9 product scenarios, 2035–2050, South Africa. DALY attribution and
+            costing are led by IPM.
+            {ceaInterim && ' These inputs are draft and still being finalized.'}
           </p>
           {ceaInterim && (
             <div className="mt-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 max-w-3xl">
-              <span className="font-semibold">Preliminary estimate.</span> This cost-effectiveness view uses
-              draft DALY-attribution and costing inputs (see the source note below for the specific
-              per-case values). It is pending IPM&rsquo;s authoritative refresh — treat absolute ICERs as provisional.
+              <span className="font-semibold">Draft inputs.</span> The DALY attribution and costing shown
+              here are developed by IPM and are still being finalized (see the source note below for the
+              specific per-case values) — treat absolute ICERs as provisional.
             </div>
           )}
         </div>
 
         <AssumptionsCard assumptions={assumptions} />
+
+        {hasMeanCe && (
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="text-sm font-medium text-gray-600 font-sans">Central estimate:</span>
+            <div className="flex rounded-full border border-gray-200 overflow-hidden text-sm font-sans">
+              <button
+                onClick={() => setCentralStat('median')}
+                className="px-3 py-1 transition-colors duration-150"
+                style={statCe === 'median'
+                  ? { backgroundColor: '#0E7490', color: '#fff' }
+                  : { backgroundColor: '#fff', color: '#6B7280' }}
+              >
+                Median
+              </button>
+              <button
+                onClick={() => setCentralStat('mean')}
+                className="px-3 py-1 transition-colors duration-150"
+                style={statCe === 'mean'
+                  ? { backgroundColor: '#0E7490', color: '#fff' }
+                  : { backgroundColor: '#fff', color: '#6B7280' }}
+              >
+                Mean
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Two stacked bar charts */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
@@ -767,8 +810,8 @@ export default function CostEffectiveness() {
                 Lifetime cost averted per HIV case
               </p>
               <p className="text-xs text-gray-400 font-sans mb-3">
-                Dominant HSCA lever (HIV ≈ 85–96% of offsets). IPM cost-of-illness range
-                $3,957–$15,601 (update pending); prior point estimate ${Math.round(defaultHivCost).toLocaleString()}.
+                Dominant HSCA lever (HIV ≈ 85–96% of offsets). IPM estimate
+                ${Math.round(defaultHivCost).toLocaleString()} per averted case; drag to test the ART-only sensitivity.
               </p>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-400 w-8">$3.5k</span>

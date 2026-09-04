@@ -252,11 +252,10 @@ function MultiToggle({ label, options, selected, onChange, colorFn }) {
 // ---------------------------------------------------------------------------
 
 export default function ScenarioExplorer() {
-  const { populationScenarios } = useVersion();
+  const { populationScenarios, centralStat, setCentralStat } = useVersion();
   const [selectedEfficacy, setSelectedEfficacy] = useState([50, 65, 80]);
   const [selectedDuration, setSelectedDuration] = useState([6, 12, 18]);
   const [showPct, setShowPct] = useState(false);
-  const [centralStat, setCentralStat] = useState('median');
   const [labelTooltip, setLabelTooltip] = useState(null);
 
   // Some versions (e.g. Sep IPM draft) carry both mean and median across seeds.

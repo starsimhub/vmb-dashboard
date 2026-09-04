@@ -24,6 +24,8 @@ const VersionContext = createContext(null);
 export function VersionProvider({ children }) {
   const defaultVersion = versions.find((v) => v.default) || versions[0];
   const [versionId, setVersionId] = useState(defaultVersion.id);
+  // Central estimate (median | mean) shared across the Scenario Explorer and CEA.
+  const [centralStat, setCentralStat] = useState('median');
 
   const value = useMemo(() => {
     const versionInfo = versions.find((v) => v.id === versionId) || defaultVersion;
@@ -32,12 +34,14 @@ export function VersionProvider({ children }) {
       versionId,
       versionInfo,
       setVersionId,
+      centralStat,
+      setCentralStat,
       populationScenarios:  resolve(populationFiles, versionId)  || [],
       rctEndpoints:         resolve(rctEndpointFiles, versionId) || [],
       sensitivityScenarios: resolve(sensitivityFiles, versionId) || [],
       ceData:               resolve(ceFiles, versionId)          || { assumptions: {}, scenarios: [] },
     };
-  }, [versionId]);
+  }, [versionId, centralStat]);
 
   return (
     <VersionContext.Provider value={value}>

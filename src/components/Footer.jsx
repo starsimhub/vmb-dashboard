@@ -60,7 +60,7 @@ export default function Footer() {
               Jamie Cohen, Lauren Snyder, Lillian Dillard
             </p>
             <p className="text-sm text-blue-200 font-sans leading-relaxed mb-1">
-              Institute for Disease Modeling
+              Institute for Disease Modeling · IPM
             </p>
             <a
               href="mailto:jamie.cohen@gatesfoundation.org"

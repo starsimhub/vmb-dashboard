@@ -16,17 +16,21 @@ const Separator = ({ via }) => (
 
 function MainContent() {
   const { versionInfo } = useVersion();
-  // Some versions omit the cost-effectiveness section (e.g. when its CEA inputs
-  // are stale and pending a full refresh).
+  // Some versions omit sections that don't apply to them (e.g. the RCT-endpoints
+  // trial-design view, or the cost-effectiveness section).
   const showCea = !versionInfo?.hide_cea;
+  const showRct = !versionInfo?.hide_rct;
 
   return (
     <main className="flex-1">
       <Overview />
 
-      <div className="h-px bg-gradient-to-r from-transparent via-brand-teal to-transparent opacity-30" />
-
-      <RCTEndpoints />
+      {showRct && (
+        <>
+          <div className="h-px bg-gradient-to-r from-transparent via-brand-teal to-transparent opacity-30" />
+          <RCTEndpoints />
+        </>
+      )}
 
       <Separator via="via-brand-blue" />
 
