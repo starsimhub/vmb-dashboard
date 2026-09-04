@@ -116,11 +116,18 @@ function CustomTooltip({ active, payload, label, showPct }) {
         const prefix = parts.slice(0, -1).join('_');
         const lo     = d[`${prefix}_${eff}_p5`];
         const hi     = d[`${prefix}_${eff}_p95`];
+        const med    = d[`${prefix}_${eff}_median`];
+        const mean   = d[`${prefix}_${eff}_mean`];
+        const showBoth = mean !== undefined && mean !== null && med !== undefined
+          && Math.abs(mean - med) > (Math.abs(med) * 0.001);
         return (
           <p key={entry.dataKey} style={{ color: entry.fill }} className="text-xs">
             {entry.name}: {fmt(entry.value)}
             {lo !== undefined && hi !== undefined && (
               <span className="text-gray-500"> (95% UI: {fmtUI(lo)}–{fmtUI(hi)})</span>
+            )}
+            {showBoth && (
+              <span className="text-gray-500"> · median {fmt(med)} vs mean {fmt(mean)}</span>
             )}
           </p>
         );
@@ -249,12 +256,23 @@ export default function ScenarioExplorer() {
   const [selectedEfficacy, setSelectedEfficacy] = useState([50, 65, 80]);
   const [selectedDuration, setSelectedDuration] = useState([6, 12, 18]);
   const [showPct, setShowPct] = useState(false);
+  const [centralStat, setCentralStat] = useState('median');
   const [labelTooltip, setLabelTooltip] = useState(null);
 
+  // Some versions (e.g. Sep IPM draft) carry both mean and median across seeds.
+  const hasMean = useMemo(
+    () => populationScenarios.some((s) => !s.is_baseline && s.hiv_averted_mean != null),
+    [populationScenarios]
+  );
+  const stat = hasMean ? centralStat : 'median';
+  const pickStat = (s, base) =>
+    s == null ? undefined
+      : (stat === 'mean' && s[`${base}_mean`] != null ? s[`${base}_mean`] : s[`${base}_median`]);
+
   const baseline    = populationScenarios.find((s) => s.is_baseline);
-  const baselineHiv = baseline?.baseline_hiv_median;
-  const baselinePtb = baseline?.baseline_ptb_median;
-  const baselineBv  = baseline?.baseline_bv_median;
+  const baselineHiv = pickStat(baseline, 'baseline_hiv');
+  const baselinePtb = pickStat(baseline, 'baseline_ptb');
+  const baselineBv  = pickStat(baseline, 'baseline_bv');
 
   const best = populationScenarios.find(
     (s) => s.efficacy_pct === 80 && s.duration_months === 18
@@ -279,29 +297,23 @@ export default function ScenarioExplorer() {
           (x) => !x.is_baseline && x.efficacy_pct === eff && x.duration_months === dur
         );
         if (s) {
-          row[`hiv_${eff}`]        = s.hiv_averted_median;
-          row[`hiv_${eff}_p5`]     = s.hiv_averted_p5;
-          row[`hiv_${eff}_p95`]    = s.hiv_averted_p95;
-          row[`hivpct_${eff}`]     = s.hiv_pct_median;
-          row[`hivpct_${eff}_p5`]  = s.hiv_pct_p5;
-          row[`hivpct_${eff}_p95`] = s.hiv_pct_p95;
-          row[`ptb_${eff}`]        = s.ptb_averted_median;
-          row[`ptb_${eff}_p5`]     = s.ptb_averted_p5;
-          row[`ptb_${eff}_p95`]    = s.ptb_averted_p95;
-          row[`ptbpct_${eff}`]     = s.ptb_pct_median;
-          row[`ptbpct_${eff}_p5`]  = s.ptb_pct_p5;
-          row[`ptbpct_${eff}_p95`] = s.ptb_pct_p95;
-          row[`bv_${eff}`]         = s.bv_averted_median;
-          row[`bv_${eff}_p5`]      = s.bv_averted_p5;
-          row[`bv_${eff}_p95`]     = s.bv_averted_p95;
-          row[`bvpct_${eff}`]      = s.bv_pct_median;
-          row[`bvpct_${eff}_p5`]   = s.bv_pct_p5;
-          row[`bvpct_${eff}_p95`]  = s.bv_pct_p95;
+          // central value = selected stat (mean when available & chosen, else median)
+          const pick = (base) =>
+            (stat === 'mean' && s[`${base}_mean`] != null) ? s[`${base}_mean`] : s[`${base}_median`];
+          for (const [key, base] of [['hiv', 'hiv_averted'], ['hivpct', 'hiv_pct'],
+                                     ['ptb', 'ptb_averted'], ['ptbpct', 'ptb_pct'],
+                                     ['bv', 'bv_averted'], ['bvpct', 'bv_pct']]) {
+            row[`${key}_${eff}`]        = pick(base);
+            row[`${key}_${eff}_p5`]     = s[`${base}_p5`];
+            row[`${key}_${eff}_p95`]    = s[`${base}_p95`];
+            row[`${key}_${eff}_median`] = s[`${base}_median`];
+            row[`${key}_${eff}_mean`]   = s[`${base}_mean`];
+          }
         }
       }
       return row;
     });
-  }, [populationScenarios]);
+  }, [populationScenarios, stat]);
 
   const filteredChartData = useMemo(() => {
     return chartData.map((row) => {
@@ -340,6 +352,10 @@ export default function ScenarioExplorer() {
         newRow[`bvpct_${eff}_p5`]   = row[`bvpct_${eff}_p5`];
         newRow[`bvpct_${eff}_p95`]  = row[`bvpct_${eff}_p95`];
         newRow[`bvpct_${eff}_err`]  = effActive ? errOffset(row[`bvpct_${eff}`], row[`bvpct_${eff}_p5`], row[`bvpct_${eff}_p95`]) : null;
+        for (const key of ['hiv', 'ptb', 'hivpct', 'ptbpct', 'bv', 'bvpct']) {
+          newRow[`${key}_${eff}_median`] = row[`${key}_${eff}_median`];
+          newRow[`${key}_${eff}_mean`]   = row[`${key}_${eff}_mean`];
+        }
       }
       return newRow;
     });
@@ -402,27 +418,54 @@ export default function ScenarioExplorer() {
             onChange={setSelectedDuration}
             colorFn={() => '#0E7490'}
           />
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-sm font-medium text-gray-600 font-sans">Show:</span>
-            <div className="flex rounded-full border border-gray-200 overflow-hidden text-sm font-sans">
-              <button
-                onClick={() => setShowPct(false)}
-                className="px-3 py-1 transition-colors duration-150"
-                style={!showPct
-                  ? { backgroundColor: '#0E7490', color: '#fff' }
-                  : { backgroundColor: '#fff', color: '#6B7280' }}
-              >
-                Absolute
-              </button>
-              <button
-                onClick={() => setShowPct(true)}
-                className="px-3 py-1 transition-colors duration-150"
-                style={showPct
-                  ? { backgroundColor: '#0E7490', color: '#fff' }
-                  : { backgroundColor: '#fff', color: '#6B7280' }}
-              >
-                % averted
-              </button>
+          <div className="flex items-center gap-6 ml-auto">
+            {hasMean && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600 font-sans">Estimate:</span>
+                <div className="flex rounded-full border border-gray-200 overflow-hidden text-sm font-sans">
+                  <button
+                    onClick={() => setCentralStat('median')}
+                    className="px-3 py-1 transition-colors duration-150"
+                    style={stat === 'median'
+                      ? { backgroundColor: '#0E7490', color: '#fff' }
+                      : { backgroundColor: '#fff', color: '#6B7280' }}
+                  >
+                    Median
+                  </button>
+                  <button
+                    onClick={() => setCentralStat('mean')}
+                    className="px-3 py-1 transition-colors duration-150"
+                    style={stat === 'mean'
+                      ? { backgroundColor: '#0E7490', color: '#fff' }
+                      : { backgroundColor: '#fff', color: '#6B7280' }}
+                  >
+                    Mean
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-600 font-sans">Show:</span>
+              <div className="flex rounded-full border border-gray-200 overflow-hidden text-sm font-sans">
+                <button
+                  onClick={() => setShowPct(false)}
+                  className="px-3 py-1 transition-colors duration-150"
+                  style={!showPct
+                    ? { backgroundColor: '#0E7490', color: '#fff' }
+                    : { backgroundColor: '#fff', color: '#6B7280' }}
+                >
+                  Absolute
+                </button>
+                <button
+                  onClick={() => setShowPct(true)}
+                  className="px-3 py-1 transition-colors duration-150"
+                  style={showPct
+                    ? { backgroundColor: '#0E7490', color: '#fff' }
+                    : { backgroundColor: '#fff', color: '#6B7280' }}
+                >
+                  % averted
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -433,17 +476,17 @@ export default function ScenarioExplorer() {
           <SummaryCard
             title="Best case"
             subtitle="80% efficacy, 18-month duration"
-            hiv={best?.hiv_averted_median}
-            ptb={best?.ptb_averted_median}
-            bv={best?.bv_averted_median}
+            hiv={pickStat(best, 'hiv_averted')}
+            ptb={pickStat(best, 'ptb_averted')}
+            bv={pickStat(best, 'bv_averted')}
             period="2035–2050"
           />
           <SummaryCard
             title="Reference scenario"
             subtitle="80% efficacy, 12-month duration"
-            hiv={reference?.hiv_averted_median}
-            ptb={reference?.ptb_averted_median}
-            bv={reference?.bv_averted_median}
+            hiv={pickStat(reference, 'hiv_averted')}
+            ptb={pickStat(reference, 'ptb_averted')}
+            bv={pickStat(reference, 'bv_averted')}
             period="2035–2050"
           />
         </div>
