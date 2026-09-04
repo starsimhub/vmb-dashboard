@@ -90,11 +90,10 @@ export default function Overview() {
           </div>
 
           {/* Quick-stat callouts */}
-          <div className="mt-10 grid grid-cols-3 gap-6 pt-8 border-t border-gray-100">
+          <div className="mt-10 grid grid-cols-2 gap-6 pt-8 border-t border-gray-100">
             {[
               { value: 'South Africa', label: 'Modeled setting' },
               { value: '15-year', label: 'Primary time horizon (2035–2050)' },
-              { value: '100k', label: 'Agent population' },
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="font-serif text-2xl font-semibold text-brand-blue">{stat.value}</p>

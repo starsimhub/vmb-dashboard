@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -127,7 +127,7 @@ function StackedTooltip({ active, payload, label, valueFormatter }) {
 // DALYs averted chart
 // ---------------------------------------------------------------------------
 
-function DalysChart({ sorted }) {
+function DalysChart({ sorted, assumptions = {} }) {
   const data = sorted.map((s) => ({
     label: s.label,
     efficacy: s.efficacy_pct,
@@ -141,7 +141,7 @@ function DalysChart({ sorted }) {
         DALYs averted (2035–2050)
       </h3>
       <p className="text-xs text-gray-400 font-sans mb-4">
-        15 DALYs/HIV infection averted · 2.74 DALYs/preterm birth averted (GBD 2023, South Africa)
+        {assumptions.dalys_per_hiv} DALYs/HIV infection averted · {assumptions.dalys_per_ptb} DALYs/preterm birth averted (GBD 2023, South Africa)
       </p>
       <ResponsiveContainer width="100%" height={340}>
         <BarChart
@@ -180,7 +180,7 @@ function DalysChart({ sorted }) {
 // Health system costs averted chart
 // ---------------------------------------------------------------------------
 
-function HscaChart({ sorted, hivCostRatio, hivCostAverted }) {
+function HscaChart({ sorted, hivCostRatio, hivCostAverted, assumptions = {} }) {
   const data = sorted.map((s) => ({
     label: s.label,
     hiv_hsca: Math.round(s.hsca * s.hiv_hsca_pct / 100 * hivCostRatio),
@@ -193,7 +193,7 @@ function HscaChart({ sorted, hivCostRatio, hivCostAverted }) {
         Health system costs averted (2035–2050)
       </h3>
       <p className="text-xs text-gray-400 font-sans mb-4">
-        ${Math.round(hivCostAverted).toLocaleString()}/HIV infection averted · $448/preterm birth averted (South Africa, preliminary)
+        ${Math.round(hivCostAverted).toLocaleString()}/HIV infection averted · ${Math.round(assumptions.hsca_per_ptb).toLocaleString()}/preterm birth averted (South Africa, preliminary)
       </p>
       <ResponsiveContainer width="100%" height={340}>
         <BarChart
@@ -521,10 +521,10 @@ function AssumptionsCard({ assumptions }) {
       <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3">Key assumptions</p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'DALYs per HIV infection averted', value: '15', note: 'Conservative; GBD SA ≈17' },
-          { label: 'DALYs per preterm birth averted', value: '2.74', note: 'GBD 2023, South Africa' },
-          { label: 'Lifetime cost averted per HIV case', value: '$11,872', note: 'ART + care, 30y, 79% coverage' },
-          { label: 'Cost averted per preterm birth', value: '$448', note: 'Direct medical costs (preliminary)' },
+          { label: 'DALYs per HIV infection averted', value: `${assumptions.dalys_per_hiv}`, note: 'GBD 2023, South Africa' },
+          { label: 'DALYs per preterm birth averted', value: `${assumptions.dalys_per_ptb}`, note: 'GBD 2023, South Africa' },
+          { label: 'Lifetime cost averted per HIV case', value: `$${Math.round(assumptions.hsca_per_hiv).toLocaleString()}`, note: 'ART + care' },
+          { label: 'Cost averted per preterm birth', value: `$${Math.round(assumptions.hsca_per_ptb).toLocaleString()}`, note: 'Health system costs (preliminary)' },
         ].map((a) => (
           <div key={a.label}>
             <p className="text-xs text-gray-500 font-sans leading-snug">{a.label}</p>
@@ -546,30 +546,65 @@ function AssumptionsCard({ assumptions }) {
 // ---------------------------------------------------------------------------
 
 export default function CostEffectiveness() {
-  const { ceData, sensitivityScenarios, populationScenarios, versionInfo } = useVersion();
+  const { ceData, sensitivityScenarios, populationScenarios, versionInfo,
+          centralStat, setCentralStat } = useVersion();
   const { assumptions, scenarios } = ceData;
   const ceaInterim = Boolean(versionInfo?.cea_interim);
+  // Versions that carry per-seed mean+median CE values (e.g. Sep IPM draft) can
+  // switch the whole CEA between the median and the mean via the shared toggle.
+  const hasMeanCe = useMemo(() => scenarios.some((s) => s.dalys_averted_median != null), [scenarios]);
+  const statCe = hasMeanCe ? centralStat : 'median';
   const popMtzById = useMemo(
     () => Object.fromEntries((populationScenarios || []).map((p) => [p.id, p.mtz_averted_median || 0])),
     [populationScenarios]
   );
+  // Resolve each scenario's headline figures to the selected central estimate.
+  const resolved = useMemo(() => scenarios.map((s) => {
+    const pick = (base) => statCe === 'mean'
+      ? (s[base] ?? s[`${base}_mean`])
+      : (s[`${base}_median`] ?? s[base]);
+    return {
+      ...s,
+      dalys_averted: pick('dalys_averted'), hsca: pick('hsca'), lbp_volume: pick('lbp_volume'),
+      hiv_averted: pick('hiv_averted'), ptb_averted: pick('ptb_averted'),
+      hiv_daly_pct: pick('hiv_daly_pct'), ptb_daly_pct: pick('ptb_daly_pct'),
+      hiv_hsca_pct: pick('hiv_hsca_pct'), ptb_hsca_pct: pick('ptb_hsca_pct'),
+    };
+  }), [scenarios, statCe]);
   const sorted = useMemo(
-    () => [...scenarios].sort(
+    () => [...resolved].sort(
       (a, b) => b.duration_months - a.duration_months || a.efficacy_pct - b.efficacy_pct
     ),
-    [scenarios]
+    [resolved]
   );
-  // Fully-loaded cost per course = DS CoGs (from a manufacturing arm) + everything
-  // else (drug-product fill/finish, delivery, overhead — still preliminary).
+  // Versions that carry IPM's channel costing (procurement COGS + OTC/Rx delivery)
+  // use a simplified cost panel matching IPM's assumptions.
+  const cogsPoints = assumptions.cogs_points || [];
+  const channels   = assumptions.channels || null;
+  const channelMode = Boolean(channels && cogsPoints.length);
+
+  // Fully-loaded cost per course. Default panel = DS CoGs (manufacturing arm) +
+  // drug-product/delivery/overhead. Channel panel = procurement COGS + OTC/Rx delivery.
   const [dsCogs, setDsCogs] = useState(6.45);          // Arm 2/3 (3-strain) @ 20kL
   const [addlCost, setAddlCost] = useState(13.55);     // preliminary; total defaults to $20
-  const costPerCourse = Math.round((dsCogs + addlCost) * 100) / 100;
+  const [cogsIdx, setCogsIdx] = useState(0);       // $4.24 procurement (first point)
+  const [channel, setChannel] = useState('rx');    // facility/prescriber delivery
+  const cogs = cogsPoints[cogsIdx] ?? cogsPoints[0] ?? 6.45;
+  const deliveryCost = channels ? (channel === 'otc' ? channels.otc : channels.rx) : 0;
+  const costPerCourse = channelMode
+    ? Math.round((cogs + deliveryCost) * 100) / 100
+    : Math.round((dsCogs + addlCost) * 100) / 100;
+
   const defaultHivCost = assumptions.hsca_per_hiv || 11872;
   const [hivCostAverted, setHivCostAverted] = useState(defaultHivCost);
+  // Reset the HIV-cost slider to the active version's default when the version changes.
+  useEffect(() => { setHivCostAverted(defaultHivCost); }, [defaultHivCost]);
   const hivCostRatio = defaultHivCost ? hivCostAverted / defaultHivCost : 1;
   const [mtzCost, setMtzCost] = useState(0);
   const [discountPct, setDiscountPct] = useState(0);
-  const discountRate = discountPct / 100;
+  // Channel mode matches IPM: no BV/MTZ cost offset, undiscounted.
+  const effMtzCost = channelMode ? 0 : mtzCost;
+  const discountRate = (channelMode ? 0 : discountPct) / 100;
 
   return (
     <section id="ce" className="py-16 bg-brand-grayLight">
@@ -583,27 +618,51 @@ export default function CostEffectiveness() {
           <h2 className="section-heading">DALYs averted &amp; cost-effectiveness</h2>
           <p className="section-subheading max-w-2xl">
             DALYs averted, health system costs averted, and incremental cost-effectiveness ratios
-            (ICERs) across the 9 product scenarios, 2035–2050, South Africa.
-            {ceaInterim
-              ? ' This is an interim IDM estimate for the no-permanence scenario, pending IPM validation.'
-              : ' Results are from a parallel Gates Foundation / IPM analysis.'}
+            (ICERs) across the 9 product scenarios, 2035–2050, South Africa. DALY attribution and
+            costing are led by IPM.
+            {ceaInterim && ' These inputs are draft and still being finalized.'}
           </p>
           {ceaInterim && (
             <div className="mt-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 max-w-3xl">
-              <span className="font-semibold">Interim IDM estimate.</span> This cost-effectiveness view
-              uses IDM&rsquo;s own DALY attribution and costing for the no-permanent-engraftment scenario
-              (flat 15 / 2.74 DALYs; age-specific HSCA ≈ adult; undiscounted). It is a cross-check pending
-              IPM&rsquo;s authoritative DALY-attribution and costing refresh — treat absolute ICERs as provisional.
+              <span className="font-semibold">Draft inputs.</span> The DALY attribution and costing shown
+              here are developed by IPM and are still being finalized (see the source note below for the
+              specific per-case values) — treat absolute ICERs as provisional.
             </div>
           )}
         </div>
 
         <AssumptionsCard assumptions={assumptions} />
 
+        {hasMeanCe && (
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="text-sm font-medium text-gray-600 font-sans">Central estimate:</span>
+            <div className="flex rounded-full border border-gray-200 overflow-hidden text-sm font-sans">
+              <button
+                onClick={() => setCentralStat('median')}
+                className="px-3 py-1 transition-colors duration-150"
+                style={statCe === 'median'
+                  ? { backgroundColor: '#0E7490', color: '#fff' }
+                  : { backgroundColor: '#fff', color: '#6B7280' }}
+              >
+                Median
+              </button>
+              <button
+                onClick={() => setCentralStat('mean')}
+                className="px-3 py-1 transition-colors duration-150"
+                style={statCe === 'mean'
+                  ? { backgroundColor: '#0E7490', color: '#fff' }
+                  : { backgroundColor: '#fff', color: '#6B7280' }}
+              >
+                Mean
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Two stacked bar charts */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <DalysChart sorted={sorted} />
-          <HscaChart sorted={sorted} hivCostRatio={hivCostRatio} hivCostAverted={hivCostAverted} />
+          <DalysChart sorted={sorted} assumptions={assumptions} />
+          <HscaChart sorted={sorted} hivCostRatio={hivCostRatio} hivCostAverted={hivCostAverted} assumptions={assumptions} />
         </div>
 
         {/* ICER interactive */}
@@ -613,14 +672,83 @@ export default function CostEffectiveness() {
           </h3>
           <p className="text-xs text-gray-400 font-sans mb-6">
             Fully loaded cost <span className="font-semibold text-brand-teal">${costPerCourse.toFixed(2)}/course</span>
-            {' '}= DS CoGs ${dsCogs.toFixed(2)} + drug product/delivery/overhead ${addlCost.toFixed(2)}.
-            Adjust the inputs below to see which scenarios are cost-saving (health-system costs averted
+            {channelMode
+              ? ` = procurement $${cogs.toFixed(2)} + ${channel === 'otc' ? 'OTC' : 'Rx'} delivery $${deliveryCost.toFixed(2)}.`
+              : ` = DS CoGs $${dsCogs.toFixed(2)} + drug product/delivery/overhead $${addlCost.toFixed(2)}.`}
+            {' '}Adjust the inputs below to see which scenarios are cost-saving (health-system costs averted
             exceed program cost) and the incremental cost per DALY averted otherwise. No willingness-to-pay
             threshold is applied — compare the ICER against your own.
           </p>
 
           {/* Sliders */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {channelMode && (
+              <>
+                {/* Procurement COGS per course (IPM points) */}
+                <div className="bg-brand-grayLight rounded-lg p-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+                    Procurement cost per course
+                  </p>
+                  <p className="text-xs text-gray-400 font-sans mb-2">
+                    IPM CoGs assessment (RHT), range ${Math.min(...cogsPoints).toFixed(2)}–${Math.max(...cogsPoints).toFixed(2)}.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {cogsPoints.map((c, i) => {
+                      const active = i === cogsIdx;
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => setCogsIdx(i)}
+                          className="text-xs font-sans rounded px-2 py-1 border transition-colors"
+                          style={active
+                            ? { backgroundColor: '#0E7490', color: '#fff', borderColor: '#0E7490' }
+                            : { backgroundColor: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
+                        >
+                          ${c.toFixed(2)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="bg-brand-teal text-white rounded-lg px-3 py-1 inline-block text-center">
+                    <span className="font-serif font-bold text-base">${cogs.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Delivery channel toggle (OTC vs Rx) */}
+                <div className="bg-brand-grayLight rounded-lg p-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+                    Delivery channel
+                  </p>
+                  <p className="text-xs text-gray-400 font-sans mb-2">
+                    OTC vs facility/prescriber dispensing (IPM RHT delivery costing).
+                  </p>
+                  <div className="flex rounded-full border border-gray-200 overflow-hidden text-sm font-sans mb-2">
+                    <button
+                      onClick={() => setChannel('otc')}
+                      className="px-3 py-1 transition-colors duration-150"
+                      style={channel === 'otc'
+                        ? { backgroundColor: '#0E7490', color: '#fff' }
+                        : { backgroundColor: '#fff', color: '#6B7280' }}
+                    >
+                      OTC ${channels.otc.toFixed(2)}
+                    </button>
+                    <button
+                      onClick={() => setChannel('rx')}
+                      className="px-3 py-1 transition-colors duration-150"
+                      style={channel === 'rx'
+                        ? { backgroundColor: '#0E7490', color: '#fff' }
+                        : { backgroundColor: '#fff', color: '#6B7280' }}
+                    >
+                      Rx ${channels.rx.toFixed(2)}
+                    </button>
+                  </div>
+                  <div className="bg-brand-teal text-white rounded-lg px-3 py-1 inline-block text-center">
+                    <span className="font-serif font-bold text-base">${deliveryCost.toFixed(2)} delivery</span>
+                  </div>
+                </div>
+              </>
+            )}
+            {!channelMode && (<>
             {/* DS CoGs per course (by manufacturing arm) */}
             <div className="bg-brand-grayLight rounded-lg p-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
@@ -675,14 +803,15 @@ export default function CostEffectiveness() {
               </div>
             </div>
 
+            </>)}
             {/* Lifetime cost averted per HIV case slider */}
             <div className="bg-brand-grayLight rounded-lg p-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
                 Lifetime cost averted per HIV case
               </p>
               <p className="text-xs text-gray-400 font-sans mb-3">
-                Dominant HSCA lever (HIV ≈ 85–96% of offsets). IPM cost-of-illness range
-                $3,957–$15,601 (update pending); prior point estimate ${Math.round(defaultHivCost).toLocaleString()}.
+                Dominant HSCA lever (HIV ≈ 85–96% of offsets). IPM estimate
+                ${Math.round(defaultHivCost).toLocaleString()} per averted case; drag to test the ART-only sensitivity.
               </p>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-400 w-8">$3.5k</span>
@@ -699,6 +828,7 @@ export default function CostEffectiveness() {
               </div>
             </div>
 
+            {!channelMode && (<>
             {/* MTZ cost averted per course slider */}
             <div className="bg-brand-grayLight rounded-lg p-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
@@ -746,6 +876,7 @@ export default function CostEffectiveness() {
                 </div>
               </div>
             </div>
+            </>)}
           </div>
 
           {/* Color key */}
@@ -765,7 +896,7 @@ export default function CostEffectiveness() {
             ))}
           </div>
 
-          <IcerGrid sorted={sorted} costPerCourse={costPerCourse} hivCostRatio={hivCostRatio} mtzCost={mtzCost} popMtzById={popMtzById} />
+          <IcerGrid sorted={sorted} costPerCourse={costPerCourse} hivCostRatio={hivCostRatio} mtzCost={effMtzCost} popMtzById={popMtzById} />
         </div>
 
         {/* ICER drivers: efficacy & durability */}
@@ -779,7 +910,7 @@ export default function CostEffectiveness() {
             cost-saving. Durability is the dominant lever — longer duration drives ICERs down sharply
             as HIV benefit (and the associated cost offset) accrues.
           </p>
-          <IcerDriversChart scenarios={sorted} costPerCourse={costPerCourse} hivCostRatio={hivCostRatio} mtzCost={mtzCost} popMtzById={popMtzById} />
+          <IcerDriversChart scenarios={sorted} costPerCourse={costPerCourse} hivCostRatio={hivCostRatio} mtzCost={effMtzCost} popMtzById={popMtzById} />
         </div>
 
         {/* ICER drivers: sensitivity parameters */}
@@ -803,7 +934,7 @@ export default function CostEffectiveness() {
             assumptions={assumptions}
             costPerCourse={costPerCourse}
             hivCostAverted={hivCostAverted}
-            mtzCost={mtzCost}
+            mtzCost={effMtzCost}
             discountRate={discountRate}
           />
         </div>

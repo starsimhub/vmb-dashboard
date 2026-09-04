@@ -1,11 +1,21 @@
 [
   {
+    "id": "sep-2026-ipm-draft",
+    "label": "Sep 2026 · IPM draft CEA",
+    "date": "2026-09-04",
+    "description": "IPM Sept-1 draft cost-effectiveness inputs (PTB HSCA $1,540, PTB DALY 2.61, HIV HSCA $9,443 TBC); OTC vs Rx delivery channels",
+    "default": true,
+    "cea_interim": true,
+    "hide_rct": true
+  },
+  {
     "id": "aug-2026-no-permanence",
     "label": "Aug 2026 \u00b7 no permanent engraftment",
     "date": "2026-08-21",
     "description": "Durability revision: no permanent CST I engraftment (drawn-duration then graceful decay); more conservative HIV impact",
-    "default": true,
-    "cea_interim": true
+    "default": false,
+    "cea_interim": true,
+    "hide_rct": true
   },
   {
     "id": "jul-2026-icer-drivers",

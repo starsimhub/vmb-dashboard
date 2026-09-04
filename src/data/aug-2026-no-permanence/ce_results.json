@@ -6,7 +6,7 @@
     "hsca_per_ptb": 448.0,
     "analysis_period": "2035\u20132050",
     "setting": "South Africa",
-    "source": "IDM interim estimate \u2014 no permanent engraftment; undiscounted. Flat 15 DALYs & $11,872 HSCA per HIV case averted (averted HIV is ~all adult), 2.74 DALYs & $448 per preterm birth. Pending IPM DALY-attribution and costing validation."
+    "source": "DALY attribution and costing by IPM, applied to the no-permanence results: 15 DALYs & $11,872 per HIV case averted (averted HIV is ~all adult), 2.74 DALYs & $448 per preterm birth; undiscounted, 2035\u20132050. Superseded by the Sep 2026 IPM-draft version."
   },
   "scenarios": [
     {

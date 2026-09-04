@@ -17,11 +17,12 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Some versions hide the cost-effectiveness section (e.g. when its CEA
-  // inputs are stale and pending refresh); drop the nav link to match.
-  const navLinks = versionInfo?.hide_cea
-    ? NAV_LINKS.filter((l) => l.href !== '#ce')
-    : NAV_LINKS;
+  // Some versions hide sections (RCT-endpoints and/or cost-effectiveness);
+  // drop the matching nav links.
+  const navLinks = NAV_LINKS.filter((l) =>
+    !(versionInfo?.hide_cea && l.href === '#ce') &&
+    !(versionInfo?.hide_rct && l.href === '#rct')
+  );
 
   useEffect(() => {
     const handleScroll = () => {
